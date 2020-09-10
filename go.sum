@@ -231,6 +231,8 @@ github.com/goswap/collector v0.0.3 h1:RW2OBlmC+QQxMKxhQN4TiUwFnZidYcdXo6ghp/3g+g
 github.com/goswap/collector v0.0.3/go.mod h1:pfiL1Hf4U/EAizkTOz6EnYQhhk7UQoxa94BG/TTjeZ4=
 github.com/goswap/collector v0.0.5 h1:gB6MB0WDGFbLbCl1cfJLV/rGF2JftDSzfIgfrPvTrIs=
 github.com/goswap/collector v0.0.5/go.mod h1:pfiL1Hf4U/EAizkTOz6EnYQhhk7UQoxa94BG/TTjeZ4=
+github.com/goswap/collector v0.0.6 h1:CWE5qeoa87b2sdcbDIgYTXbPfoaE5/5kygD9hrvIl+4=
+github.com/goswap/collector v0.0.6/go.mod h1:eB9ofPh4GE6o3VYlFGUfhDlAcMMVnk++bslXZz48DUQ=
 github.com/hashicorp/go-uuid v1.0.2/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=

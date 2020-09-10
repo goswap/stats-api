@@ -37,7 +37,7 @@ type StatsBackend interface {
 	// GetLiquidityByToken returns the total liquidity by token across all its pairs
 	// in the given time window at the given duration (eg per minute, per day,
 	// etc).
-	GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error)
+	GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error)
 
 	// TODO(reed): do we want GetPriceByToken and just return USD? we can 'magic' this on front end too and
 	// just use the right pair?

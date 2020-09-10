@@ -9,7 +9,7 @@ require (
 	github.com/btcsuite/btcd v0.21.0-beta // indirect
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/google/uuid v1.1.2 // indirect
-	github.com/goswap/collector v0.0.5
+	github.com/goswap/collector v0.0.6
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/treeder/firetils v0.0.8
 	github.com/treeder/gcputils v0.0.34

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/goswap/collector/models"
 	"github.com/goswap/stats-api/backend"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
@@ -40,14 +41,17 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("welcome"))
 	})
+	r.Post("/collect", errorHandler(collect))
 	r.Route("/tokens", func(r chi.Router) {
+		r.Get("/", errorHandler(getTokens))
 		r.Route("/{symbol}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
-			// TODO r.Get("/liquidity", errorHandler(getTokenLiquidity))
+			r.Get("/liquidity", errorHandler(getTokenLiquidity))
 			r.Get("/volume", errorHandler(getTokenVolume))
 		})
 	})
 	r.Route("/pairs", func(r chi.Router) {
+		r.Get("/", errorHandler(getPairs))
 		r.Route("/{pair}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
 			r.Get("/volume", errorHandler(getPairVolume))
@@ -80,6 +84,28 @@ func errorHandler(h myHandlerFunc) http.HandlerFunc {
 			}
 		}
 	}
+}
+
+// returns a list of all tokens
+func getTokens(w http.ResponseWriter, r *http.Request) error {
+	// TODO !!!!
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"tokens": []*models.TokenDetails{{
+			Name:   "WGO",
+			Symbol: "WGO",
+		}, {
+			Name:   "FAST",
+			Symbol: "FAST",
+		},
+		}, // this has volume and liquidity
+	})
+	return nil
+}
+
+// returns a list of all tokens
+func getPairs(w http.ResponseWriter, r *http.Request) error {
+	gotils.WriteMessage(w, http.StatusOK, "TODO")
+	return nil
 }
 
 func getTotals(w http.ResponseWriter, r *http.Request) error {
@@ -154,5 +180,31 @@ func getTokenVolume(w http.ResponseWriter, r *http.Request) error {
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"overTime": tokens,
 	})
+	return nil
+}
+
+func getTokenLiquidity(w http.ResponseWriter, r *http.Request) error {
+	// TODO query parameters for times, interval
+	ctx := r.Context()
+	timeStart := time.Now().AddDate(0, 0, -1)
+	timeEnd := time.Now()
+	interval := time.Duration(0)
+	symbol := chi.URLParam(r, "symbol")
+
+	tokens, err := db.GetLiquidityByToken(ctx, symbol, timeStart, timeEnd, interval)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"overTime": tokens,
+	})
+	return nil
+}
+
+func collect(w http.ResponseWriter, r *http.Request) error {
+	// prevent this from running more than once per hour
+	gcputils.Info().Println("testing...")
+	gotils.WriteMessage(w, http.StatusOK, "hi")
 	return nil
 }
