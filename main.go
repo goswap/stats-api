@@ -117,7 +117,7 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 		totals = append(totals, t)
 	}
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"totals": totals,
+		"overTime": totals, // this has volume and liquidity
 	})
 	return nil
 }

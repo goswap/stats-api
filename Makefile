@@ -4,7 +4,7 @@ build:
 	go build
 
 run: build
-	./example
+	./stats-api
 
 docker:
 	docker build -t ${G_SERVICE_NAME} .
