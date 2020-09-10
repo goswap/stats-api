@@ -2,30 +2,19 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/go-chi/chi"
-	"github.com/goswap/collector/models"
-	"github.com/treeder/firetils"
+	"github.com/goswap/stats-api/backend"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
 	"github.com/treeder/gotils"
-	"google.golang.org/api/iterator"
-)
-
-const (
-	CollectionTimestamps  = "timestamps"
-	CollectionPairVolume  = "pair_volume"
-	CollectionTokenVolume = "token_volume"
-	CollectionTotalVolume = "total_volume"
 )
 
 var (
-	fs *firestore.Client
+	db backend.StatsBackend
 )
 
 func main() {
@@ -36,17 +25,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	db, err = backend.NewFirestore(ctx, acc.ProjectID, opts)
+	if err != nil {
+		gotils.L(ctx).Sugar().Fatalf("couldn't init firebase: %v\n", err)
+	}
+
+	// TODO(reed): add cache to wrap firebase backend
+
 	// Setup logging, optional, typically will work fine without this, but depends on GCP service you're using
 	// gcputils.InitLogging()
-
-	firebaseApp, err := firetils.New(ctx, acc.ProjectID, opts)
-	if err != nil {
-		gotils.L(ctx).Sugar().Fatalf("couldn't init firebase newapp: %v\n", err)
-	}
-	fs, err = firebaseApp.Firestore(ctx)
-	if err != nil {
-		gotils.L(ctx).Sugar().Fatalf("couldn't init firestore: %v\n", err)
-	}
 
 	r := goapibase.InitRouter(ctx)
 	// Setup your routes
@@ -56,13 +43,15 @@ func main() {
 	r.Route("/tokens", func(r chi.Router) {
 		r.Route("/{symbol}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
-			r.Get("/", getToken) // GET /articles/123
+			// TODO r.Get("/liquidity", errorHandler(getTokenLiquidity))
+			r.Get("/volume", errorHandler(getTokenVolume))
 		})
 	})
 	r.Route("/pairs", func(r chi.Router) {
 		r.Route("/{pair}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
-			r.Get("/", getToken) // GET /articles/123
+			r.Get("/volume", errorHandler(getPairVolume))
+			r.Get("/liquidity", errorHandler(getPairLiquidity))
 		})
 	})
 	r.Route("/totals", func(r chi.Router) {
@@ -76,9 +65,9 @@ func main() {
 }
 
 // todo: move this stuff to gotils
-type MyHandlerFunc func(w http.ResponseWriter, r *http.Request) error
+type myHandlerFunc func(w http.ResponseWriter, r *http.Request) error
 
-func errorHandler(h MyHandlerFunc) http.HandlerFunc {
+func errorHandler(h myHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h(w, r)
 		if err != nil {
@@ -94,37 +83,76 @@ func errorHandler(h MyHandlerFunc) http.HandlerFunc {
 }
 
 func getTotals(w http.ResponseWriter, r *http.Request) error {
+	// TODO query parameters for times, interval
 	ctx := r.Context()
 	timeStart := time.Now().AddDate(0, 0, -1)
 	timeEnd := time.Now()
-	totals := []*models.TotalBucket{}
-	iter := fs.Collection(CollectionTotalVolume).Where("time", ">", timeStart).Where("time", "<", timeEnd).OrderBy("time", firestore.Asc).Documents(ctx)
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return gotils.C(ctx).Errorf("error getting data: %v", err)
-		}
-		// fmt.Println(doc.Data())
-		t := &models.TotalBucket{}
-		err = doc.DataTo(t)
-		if err != nil {
-			return gotils.C(ctx).Errorf("%v", err)
-		}
-		t.AfterLoad(ctx)
-		totals = append(totals, t)
+	interval := time.Duration(0)
+
+	totals, err := db.GetTotals(ctx, timeStart, timeEnd, interval)
+	if err != nil {
+		return err
 	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"overTime": totals, // this has volume and liquidity
 	})
 	return nil
 }
 
-func getToken(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
+func getPairVolume(w http.ResponseWriter, r *http.Request) error {
+	// TODO query parameters for times, interval
+	ctx := r.Context()
+	timeStart := time.Now().AddDate(0, 0, -1)
+	timeEnd := time.Now()
+	interval := time.Duration(0)
+	symbol := chi.URLParam(r, "pair")
+
+	pairs, err := db.GetVolumeByPair(ctx, symbol, timeStart, timeEnd, interval)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"overTime": pairs,
+	})
+	return nil
+}
+
+func getPairLiquidity(w http.ResponseWriter, r *http.Request) error {
+	// TODO query parameters for times, interval
+	ctx := r.Context()
+	timeStart := time.Now().AddDate(0, 0, -1)
+	timeEnd := time.Now()
+	interval := time.Duration(0)
+	symbol := chi.URLParam(r, "pair")
+
+	pairs, err := db.GetLiquidityByPair(ctx, symbol, timeStart, timeEnd, interval)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"overTime": pairs,
+	})
+	return nil
+}
+
+func getTokenVolume(w http.ResponseWriter, r *http.Request) error {
+	// TODO query parameters for times, interval
+	ctx := r.Context()
+	timeStart := time.Now().AddDate(0, 0, -1)
+	timeEnd := time.Now()
+	interval := time.Duration(0)
 	symbol := chi.URLParam(r, "symbol")
-	// fs.Collection(CollectionTokenVolume).Where()
-	w.Write([]byte(fmt.Sprintf("title:%s", symbol)))
+
+	tokens, err := db.GetVolumeByToken(ctx, symbol, timeStart, timeEnd, interval)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"overTime": tokens,
+	})
+	return nil
 }
