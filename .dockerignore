@@ -1,0 +1,6 @@
+# Put your apps bin file in here
+
+Makefile
+Dockerfile
+secrets/
+secrets.env
