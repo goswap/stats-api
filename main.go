@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dgraph-io/ristretto"
 	"github.com/go-chi/chi"
-	"github.com/goswap/collector/models"
 	"github.com/goswap/stats-api/backend"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	db backend.StatsBackend
+	db    backend.StatsBackend
+	cache *ristretto.Cache
 )
 
 func main() {
@@ -28,10 +29,8 @@ func main() {
 
 	db, err = backend.NewFirestore(ctx, acc.ProjectID, opts)
 	if err != nil {
-		gotils.L(ctx).Sugar().Fatalf("couldn't init firebase: %v\n", err)
+		log.Fatalf("couldn't init firebase: %v\n", err)
 	}
-
-	// TODO(reed): add cache to wrap firebase backend
 
 	// Setup logging, optional, typically will work fine without this, but depends on GCP service you're using
 	// gcputils.InitLogging()
@@ -88,23 +87,31 @@ func errorHandler(h myHandlerFunc) http.HandlerFunc {
 
 // returns a list of all tokens
 func getTokens(w http.ResponseWriter, r *http.Request) error {
-	// TODO !!!!
+	ctx := r.Context()
+
+	ret, err := db.GetTokens(ctx)
+	if err != nil {
+		return err
+	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"tokens": []*models.TokenDetails{{
-			Name:   "WGO",
-			Symbol: "WGO",
-		}, {
-			Name:   "FAST",
-			Symbol: "FAST",
-		},
-		}, // this has volume and liquidity
+		"tokens": ret,
 	})
 	return nil
 }
 
 // returns a list of all tokens
 func getPairs(w http.ResponseWriter, r *http.Request) error {
-	gotils.WriteMessage(w, http.StatusOK, "TODO")
+	ctx := r.Context()
+
+	ret, err := db.GetPairs(ctx)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"pairs": ret,
+	})
 	return nil
 }
 

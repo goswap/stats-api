@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/goswap/collector/models"
+	"github.com/goswap/stats-api/models"
 )
 
 // TODO(reed): the interval seems wise but it may be the case that we want to
@@ -17,6 +17,14 @@ import (
 
 // StatsBackend defines methods for accessing goswap statistics
 type StatsBackend interface {
+	// GetPairs returns all the available pairs
+	GetPairs(ctx context.Context) ([]*models.Pair, error)
+	GetPair(ctx context.Context, address string) (*models.Pair, error)
+
+	// GetTokens returns all the available tokens
+	GetTokens(ctx context.Context) ([]*models.Token, error)
+	GetToken(ctx context.Context, address string) (*models.Token, error)
+
 	// GetTotals returns the total volume and liquidity over all tokens in the
 	// given time window at the given duration (eg per minute, per day, etc).
 	GetTotals(ctx context.Context, from, to time.Time, interval time.Duration) ([]*models.TotalBucket, error)
