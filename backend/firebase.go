@@ -23,12 +23,12 @@ const (
 	CollectionPairs  = "pairs"
 	CollectionTokens = "tokens"
 
-	CollectionPairLiquidity  = "pair_liquidity"
-	CollectionTokenLiquidity = "token_liquidity"
+	CollectionPairBuckets  = "pair_buckets"
+	CollectionTokenBuckets = "token_buckets"
 
-	CollectionPairVolume  = "pair_volume"
-	CollectionTokenVolume = "token_volume"
-	CollectionTotals      = "totals" // TODO: change the name of this to just totals?  or split liquidity into separate collection?
+	// CollectionPairVolume  = "pair_volume"
+	// CollectionTokenVolume = "token_volume"
+	CollectionTotals = "totals" // TODO: change the name of this to just totals?  or split liquidity into separate collection?
 
 )
 
@@ -50,7 +50,6 @@ func NewFirestore(ctx context.Context, projectID string, opts []option.ClientOpt
 	return NewFirestore2(ctx, fs)
 }
 func NewFirestore2(ctx context.Context, c *firestore.Client) (*FirestoreBackend, error) {
-
 	cache, err := ristretto.NewCache(&ristretto.Config{
 		NumCounters: 1e7,             // number of keys to track frequency of (10M).
 		MaxCost:     100 << (10 * 2), // maximum cost of cache (100MB), cloud run has 256MB by default
@@ -61,6 +60,10 @@ func NewFirestore2(ctx context.Context, c *firestore.Client) (*FirestoreBackend,
 	}
 
 	return &FirestoreBackend{c: c, cache: cache}, nil
+}
+
+func (fs *FirestoreBackend) Client() *firestore.Client {
+	return fs.c
 }
 
 // GetPairs returns all available pairs
@@ -103,7 +106,7 @@ func (fs *FirestoreBackend) setPairTokens(ctx context.Context, p *models.Pair) e
 		return gotils.C(ctx).Errorf("%v", err)
 	}
 	p.Token0 = t0
-	t1, err := fs.GetToken(ctx, p.Token0Address)
+	t1, err := fs.GetToken(ctx, p.Token1Address)
 	if err != nil {
 		return gotils.C(ctx).Errorf("%v", err)
 	}
@@ -232,14 +235,17 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 	return totals, nil
 }
 
-// GetVolumeByPair returns the total volume by pair in the given time window
+// GetPairBucket returns the total volume by pair in the given time window
 // at the given duration (eg per minute, per day, etc).
-func (fs *FirestoreBackend) GetVolumeByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
+func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
 	var pairs []*models.PairBucket
 
-	iter := fs.c.Collection(CollectionPairVolume).
-		Where("pair", "==", pair).
-		Where("time", ">", from).
+	c := fs.c.Collection(CollectionPairBuckets)
+	q := c.Query
+	if pair != "" {
+		q = q.Where("address", "==", pair)
+	}
+	iter := q.Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
@@ -268,45 +274,48 @@ func (fs *FirestoreBackend) GetVolumeByPair(ctx context.Context, pair string, fr
 
 // GetLiquidityByPair returns the total liquidity by pair in the given time window
 // at the given duration (eg per minute, per day, etc).
-func (fs *FirestoreBackend) GetLiquidityByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairLiquidity, error) {
-	var pairs []*models.PairLiquidity
+// func (fs *FirestoreBackend) GetLiquidityByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairLiquidity, error) {
+// 	var pairs []*models.PairLiquidity
 
-	iter := fs.c.Collection(CollectionPairLiquidity).
-		Where("pair", "==", pair).
-		Where("time", ">", from).
-		Where("time", "<", to).
-		OrderBy("time", firestore.Asc).
-		Documents(ctx)
+// 	iter := fs.c.Collection(CollectionPairLiquidity).
+// 		Where("address", "==", pair).
+// 		Where("time", ">", from).
+// 		Where("time", "<", to).
+// 		OrderBy("time", firestore.Asc).
+// 		Documents(ctx)
 
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
-		}
-		p := new(models.PairLiquidity)
-		err = doc.DataTo(p)
-		if err != nil {
-			return nil, gotils.C(ctx).Errorf("%v", err)
-		}
-		p.AfterLoad(ctx)
-		pairs = append(pairs, p)
-	}
+// 	for {
+// 		doc, err := iter.Next()
+// 		if err == iterator.Done {
+// 			break
+// 		}
+// 		if err != nil {
+// 			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
+// 		}
+// 		p := new(models.PairLiquidity)
+// 		err = doc.DataTo(p)
+// 		if err != nil {
+// 			return nil, gotils.C(ctx).Errorf("%v", err)
+// 		}
+// 		p.AfterLoad(ctx)
+// 		pairs = append(pairs, p)
+// 	}
 
-	return pairs, nil
-}
+// 	return pairs, nil
+// }
 
-// GetVolumesByToken returns the total volume by token across all its pairs
+// GetTokenBuckets returns the total volume by token across all its pairs
 // in the given time window at the given duration (eg per minute, per day,
 // etc).
-func (fs *FirestoreBackend) GetVolumeByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
+func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	var tokens []*models.TokenBucket
 
-	iter := fs.c.Collection(CollectionTokenVolume).
-		Where("symbol", "==", token).
-		Where("time", ">", from).
+	c := fs.c.Collection(CollectionPairBuckets)
+	q := c.Query
+	if token != "" {
+		q = q.Where("address", "==", token)
+	}
+	iter := q.Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
@@ -335,33 +344,33 @@ func (fs *FirestoreBackend) GetVolumeByToken(ctx context.Context, token string, 
 // in the given time window at the given duration (eg per minute, per day,
 // etc).
 // TODO this one isn't hooked up in the collector yet? []TokenLiquidity?
-func (fs *FirestoreBackend) GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error) {
-	// TODO
-	var tokens []*models.TokenLiquidity
+// func (fs *FirestoreBackend) GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error) {
+// 	// TODO
+// 	var tokens []*models.TokenLiquidity
 
-	iter := fs.c.Collection(CollectionTokenLiquidity).
-		Where("symbol", "==", token).
-		Where("time", ">", from).
-		Where("time", "<", to).
-		OrderBy("time", firestore.Asc).
-		Documents(ctx)
+// 	iter := fs.c.Collection(CollectionTokenLiquidity).
+// 		Where("address", "==", token).
+// 		Where("time", ">", from).
+// 		Where("time", "<", to).
+// 		OrderBy("time", firestore.Asc).
+// 		Documents(ctx)
 
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
-		}
-		t := new(models.TokenLiquidity)
-		err = doc.DataTo(t)
-		if err != nil {
-			return nil, gotils.C(ctx).Errorf("%v", err)
-		}
-		t.AfterLoad(ctx)
-		tokens = append(tokens, t)
-	}
+// 	for {
+// 		doc, err := iter.Next()
+// 		if err == iterator.Done {
+// 			break
+// 		}
+// 		if err != nil {
+// 			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
+// 		}
+// 		t := new(models.TokenLiquidity)
+// 		err = doc.DataTo(t)
+// 		if err != nil {
+// 			return nil, gotils.C(ctx).Errorf("%v", err)
+// 		}
+// 		t.AfterLoad(ctx)
+// 		tokens = append(tokens, t)
+// 	}
 
-	return tokens, nil
-}
+// 	return tokens, nil
+// }

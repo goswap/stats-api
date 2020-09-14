@@ -19,9 +19,11 @@ type Pair struct {
 	Index   int            `firestore:"index" json:"index"`
 	Address common.Address `firestore:"-" json:"address"`
 
-	PairContract *contracts.Pair `firestore:"-" json:"-"` // this is the object to interact with the contract
-	Token0       *Token          `firestore:"-" json:"token0"`
-	Token1       *Token          `firestore:"-" json:"token1"`
+	Pair string `firestore:"pair" json:"pair"` // stringified version, for easy reference
+
+	PairContract *contracts.Pair `firestore:"-" json:"-"`      // this is the object to interact with the contract
+	Token0       *Token          `firestore:"-" json:"token0"` // address of token
+	Token1       *Token          `firestore:"-" json:"token1"` // address of token
 
 	// for database
 	AddressHex    string `firestore:"address" json:"-"`
@@ -122,79 +124,82 @@ type PairLiquidity struct {
 	// Address is the ID of the pair
 	Address string `firestore:"address" json:"address"`
 
-	Time   time.Time `firestore:"time" json:"time"`
-	Pair   string    `firestore:"pair" json:"pair"`
-	Token0 string    `firestore:"token0" json:"token0"`
-	Token1 string    `firestore:"token1" json:"token1"`
+	Time time.Time `firestore:"time" json:"time"`
+	Pair string    `firestore:"pair" json:"pair"`
+	// Token0 string    `firestore:"token0" json:"token0"` // symbol
+	// Token1 string    `firestore:"token1" json:"token1"` // symbol
+	// Token0Address string    `firestore:"-" json:"token0"` // symbol
+	// Token1Address string    `firestore:"-" json:"token1"` // symbol
 
 	TotalSupply decimal.Decimal `firestore:"-" json:"totalSupply"`
 	Reserve0    decimal.Decimal `firestore:"-" json:"reserve0"`
 	Reserve1    decimal.Decimal `firestore:"-" json:"reserve1"`
-	Price0      decimal.Decimal `firestore:"-" json:"price0"`
-	Price1      decimal.Decimal `firestore:"-" json:"price1"`
+	Price0USD   decimal.Decimal `firestore:"-" json:"price0USD"`
+	Price1USD   decimal.Decimal `firestore:"-" json:"price1USD"`
 
 	// firebase stuff
-	TotalSupplyS string `firestore:"totalSupply" json:"-"`
-	Reserve0S    string `firestore:"reserve0" json:"-"`
-	Reserve1S    string `firestore:"reserve1" json:"-"`
-	Price0S      string `firestore:"price0" json:"-"`
-	Price1S      string `firestore:"price1" json:"-"`
+	// TotalSupplyS string `firestore:"totalSupply" json:"-"`
+	// Reserve0S    string `firestore:"reserve0" json:"-"`
+	// Reserve1S    string `firestore:"reserve1" json:"-"`
+	// Price0S      string `firestore:"price0USD" json:"-"`
+	// Price1S      string `firestore:"price1USD" json:"-"`
 }
 
 func (s *PairLiquidity) ValUSD() decimal.Decimal {
-	reserve0val := s.Reserve0.Mul(s.Price0)
-	reserve1val := s.Reserve1.Mul(s.Price1)
+	reserve0val := s.Reserve0.Mul(s.Price0USD)
+	reserve1val := s.Reserve1.Mul(s.Price1USD)
 	totalPoolVal := reserve0val.Add(reserve1val)
 	return totalPoolVal
 }
-func (pb *PairLiquidity) PreSave() {
-	pb.TotalSupplyS = pb.TotalSupply.String()
-	pb.Reserve0S = pb.Reserve0.String()
-	pb.Reserve1S = pb.Reserve1.String()
-	pb.Price0S = pb.Price0.String()
-	pb.Price1S = pb.Price1.String()
 
-}
-func (pb *PairLiquidity) AfterLoad(ctx context.Context) {
-	// t.Ref = ref
-	// t.ID = t.Ref.ID
-	pb.TotalSupply, _ = decimal.NewFromString(pb.TotalSupplyS)
-	pb.Reserve0, _ = decimal.NewFromString(pb.Reserve0S)
-	pb.Reserve1, _ = decimal.NewFromString(pb.Reserve1S)
-	pb.Price0, _ = decimal.NewFromString(pb.Price0S)
-	pb.Price1, _ = decimal.NewFromString(pb.Price1S)
-}
+// func (pb *PairLiquidity) PreSave() {
+// 	pb.TotalSupplyS = pb.TotalSupply.String()
+// 	pb.Reserve0S = pb.Reserve0.String()
+// 	pb.Reserve1S = pb.Reserve1.String()
+// 	pb.Price0S = pb.Price0USD.String()
+// 	pb.Price1S = pb.Price1USD.String()
 
-type TokenLiquidity struct {
-	// Address is the ID of the token
-	Address string `firestore:"address" json:"address"`
+// }
+// func (pb *PairLiquidity) AfterLoad(ctx context.Context) {
+// 	// t.Ref = ref
+// 	// t.ID = t.Ref.ID
+// 	pb.TotalSupply, _ = decimal.NewFromString(pb.TotalSupplyS)
+// 	pb.Reserve0, _ = decimal.NewFromString(pb.Reserve0S)
+// 	pb.Reserve1, _ = decimal.NewFromString(pb.Reserve1S)
+// 	pb.Price0USD, _ = decimal.NewFromString(pb.Price0S)
+// 	pb.Price1USD, _ = decimal.NewFromString(pb.Price1S)
+// }
 
-	Time   time.Time `firestore:"time" json:"time"`
-	Symbol string    `firestore:"symbol"`
+// type TokenLiquidity struct {
+// 	// Address is the ID of the token
+// 	Address string `firestore:"address" json:"address"`
 
-	Reserve decimal.Decimal `firestore:"-" json:"reserve"`
-	Price   decimal.Decimal `firestore:"-" json:"price"`
+// 	Time   time.Time `firestore:"time" json:"time"`
+// 	Symbol string    `firestore:"symbol"`
 
-	// firebase stuff
-	ReserveS string `firestore:"reserve" json:"-"`
-	PriceS   string `firestore:"price" json:"-"`
-}
+// 	Reserve decimal.Decimal `firestore:"-" json:"reserve"`
+// 	Price   decimal.Decimal `firestore:"-" json:"price"`
 
-func (s *TokenLiquidity) TokenLiquidity() decimal.Decimal {
-	reserve0val := s.Reserve.Mul(s.Price)
-	return reserve0val
-}
-func (pb *TokenLiquidity) PreSave() {
-	pb.ReserveS = pb.Reserve.String()
-	pb.PriceS = pb.Price.String()
-}
+// 	// firebase stuff
+// 	ReserveS string `firestore:"reserve" json:"-"`
+// 	PriceS   string `firestore:"price" json:"-"`
+// }
 
-func (pb *TokenLiquidity) AfterLoad(ctx context.Context) {
-	// t.Ref = ref
-	// t.ID = t.Ref.ID
-	pb.Reserve, _ = decimal.NewFromString(pb.ReserveS)
-	pb.Price, _ = decimal.NewFromString(pb.PriceS)
-}
+// func (s *TokenLiquidity) TokenLiquidity() decimal.Decimal {
+// 	reserve0val := s.Reserve.Mul(s.Price)
+// 	return reserve0val
+// }
+// func (pb *TokenLiquidity) PreSave() {
+// 	pb.ReserveS = pb.Reserve.String()
+// 	pb.PriceS = pb.Price.String()
+// }
+
+// func (pb *TokenLiquidity) AfterLoad(ctx context.Context) {
+// 	// t.Ref = ref
+// 	// t.ID = t.Ref.ID
+// 	pb.Reserve, _ = decimal.NewFromString(pb.ReserveS)
+// 	pb.Price, _ = decimal.NewFromString(pb.PriceS)
+// }
 
 type PairBucket struct {
 	// Address is the ID of the pair
@@ -219,6 +224,16 @@ type PairBucket struct {
 	Price0USDS  string `firestore:"price0USD" json:"-"`
 	Price1USDS  string `firestore:"price1USD" json:"-"`
 	VolumeUSDS  string `firestore:"volumeUSD" json:"-"`
+
+	// liquidity stuff:
+	TotalSupply decimal.Decimal `firestore:"-" json:"totalSupply"`
+	Reserve0    decimal.Decimal `firestore:"-" json:"reserve0"`
+	Reserve1    decimal.Decimal `firestore:"-" json:"reserve1"`
+
+	// firebase stuff
+	TotalSupplyS string `firestore:"totalSupply" json:"-"`
+	Reserve0S    string `firestore:"reserve0" json:"-"`
+	Reserve1S    string `firestore:"reserve1" json:"-"`
 }
 
 // PreSave Need these annoying things because firebase doesn't handle things properly
@@ -231,6 +246,10 @@ func (pb *PairBucket) PreSave() {
 	pb.Price1USDS = pb.Price1USD.String()
 	pb.VolumeUSDS = pb.VolumeUSD.String()
 
+	pb.TotalSupplyS = pb.TotalSupply.String()
+	pb.Reserve0S = pb.Reserve0.String()
+	pb.Reserve1S = pb.Reserve1.String()
+
 }
 func (pb *PairBucket) AfterLoad(ctx context.Context) {
 	// t.Ref = ref
@@ -242,6 +261,17 @@ func (pb *PairBucket) AfterLoad(ctx context.Context) {
 	pb.Price0USD, _ = decimal.NewFromString(pb.Price0USDS)
 	pb.Price1USD, _ = decimal.NewFromString(pb.Price1USDS)
 	pb.VolumeUSD, _ = decimal.NewFromString(pb.VolumeUSDS)
+
+	pb.TotalSupplyS = pb.TotalSupply.String()
+	pb.Reserve0S = pb.Reserve0.String()
+	pb.Reserve1S = pb.Reserve1.String()
+}
+
+func (s *PairBucket) ValUSD() decimal.Decimal {
+	reserve0val := s.Reserve0.Mul(s.Price0USD)
+	reserve1val := s.Reserve1.Mul(s.Price1USD)
+	totalPoolVal := reserve0val.Add(reserve1val)
+	return totalPoolVal
 }
 
 type TokenBucket struct {
@@ -255,18 +285,23 @@ type TokenBucket struct {
 	AmountOut decimal.Decimal `firestore:"-" json:"amountOut"`
 	PriceUSD  decimal.Decimal `firestore:"-" json:"priceUSD"`
 	VolumeUSD decimal.Decimal `firestore:"-" json:"volumeUSD"` // in USD
+	Reserve   decimal.Decimal `firestore:"-" json:"reserve"`
 
 	// firebase bullshit:
 	AmountInS  string `firestore:"amountIn" json:"-"`
 	AmountOutS string `firestore:"amountOut" json:"-"`
 	PriceUSDS  string `firestore:"priceUSD" json:"-"`
 	VolumeUSDS string `firestore:"volumeUSD" json:"-"`
+	ReserveS   string `firestore:"reserve" json:"-"`
 }
 
 // PreSave Need these annoying things because firebase doesn't handle things properly
 func (pb *TokenBucket) PreSave() {
 	pb.AmountInS = pb.AmountIn.String()
 	pb.AmountOutS = pb.AmountOut.String()
+
+	pb.ReserveS = pb.Reserve.String()
+
 	pb.PriceUSDS = pb.PriceUSD.String()
 	pb.VolumeUSDS = pb.VolumeUSD.String()
 
@@ -276,8 +311,16 @@ func (pb *TokenBucket) AfterLoad(ctx context.Context) {
 	// t.ID = t.Ref.ID
 	pb.AmountIn, _ = decimal.NewFromString(pb.AmountInS)
 	pb.AmountOut, _ = decimal.NewFromString(pb.AmountOutS)
+
+	pb.Reserve, _ = decimal.NewFromString(pb.ReserveS)
+
 	pb.PriceUSD, _ = decimal.NewFromString(pb.PriceUSDS)
 	pb.VolumeUSD, _ = decimal.NewFromString(pb.VolumeUSDS)
+}
+
+func (s *TokenBucket) TokenLiquidity() decimal.Decimal {
+	reserve0val := s.Reserve.Mul(s.PriceUSD)
+	return reserve0val
 }
 
 type TotalBucket struct {

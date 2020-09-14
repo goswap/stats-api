@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgraph-io/ristretto"
 	"github.com/go-chi/chi"
 	"github.com/goswap/stats-api/backend"
 	"github.com/treeder/gcputils"
@@ -15,8 +14,7 @@ import (
 )
 
 var (
-	db    backend.StatsBackend
-	cache *ristretto.Cache
+	db backend.StatsBackend
 )
 
 func main() {
@@ -27,21 +25,35 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err = backend.NewFirestore(ctx, acc.ProjectID, opts)
+	dbfs, err := backend.NewFirestore(ctx, acc.ProjectID, opts)
 	if err != nil {
 		log.Fatalf("couldn't init firebase: %v\n", err)
 	}
+	db = dbfs
 
 	// Setup logging, optional, typically will work fine without this, but depends on GCP service you're using
 	// gcputils.InitLogging()
 
-	// load up and cache top tokens and pairse
+	// load up and cache top tokens and pairs
 	// pairs, err := db.GetPairs(ctx)
 	// if err != nil {
 	// 	log.Fatalf("error on GetPairs: %v\n", err)
 	// }
 
-	// db.GetTop
+	// // TODO: the following will get heavy quickly as we add more pairs, need to change this
+	// // TODO: perhaps the collector can update these values on the Pair and Token objects directly so it's just done once during collection runs.
+	// // fs := dbfs.Client()
+	// timeStart := time.Now().AddDate(0, 0, -1)
+	// timeEnd := time.Now()
+	// interval := time.Duration(0)
+	// pairBuckets, err := db.GetPairBuckets(ctx, "", timeStart, timeEnd, interval)
+	// if err != nil {
+	// 	log.Fatalf("error on GetPairBuckets: %v\n", err)
+	// }
+	// tokenBuckets, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, interval)
+	// if err != nil {
+	// 	log.Fatalf("error on GetTokenBuckets: %v\n", err)
+	// }
 
 	r := goapibase.InitRouter(ctx)
 	// Setup your routes
@@ -53,16 +65,16 @@ func main() {
 		r.Get("/", errorHandler(getTokens))
 		r.Route("/{symbol}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
-			r.Get("/liquidity", errorHandler(getTokenLiquidity))
-			r.Get("/volume", errorHandler(getTokenVolume))
+			r.Get("/buckets", errorHandler(getTokenBuckets))
+			// r.Get("/volume", errorHandler(getTokenVolume))
 		})
 	})
 	r.Route("/pairs", func(r chi.Router) {
 		r.Get("/", errorHandler(getPairs))
 		r.Route("/{pair}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
-			r.Get("/volume", errorHandler(getPairVolume))
-			r.Get("/liquidity", errorHandler(getPairLiquidity))
+			r.Get("/buckets", errorHandler(getPairBuckets))
+			// r.Get("/liquidity", errorHandler(getPairLiquidity))
 		})
 	})
 	r.Route("/totals", func(r chi.Router) {
@@ -141,7 +153,26 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func getPairVolume(w http.ResponseWriter, r *http.Request) error {
+// func getPairVolume(w http.ResponseWriter, r *http.Request) error {
+// 	// TODO query parameters for times, interval
+// 	ctx := r.Context()
+// 	timeStart := time.Now().AddDate(0, 0, -1)
+// 	timeEnd := time.Now()
+// 	interval := time.Duration(0)
+// 	symbol := chi.URLParam(r, "pair")
+
+// 	pairs, err := db.GetVolumeByPair(ctx, symbol, timeStart, timeEnd, interval)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+// 		"overTime": pairs,
+// 	})
+// 	return nil
+// }
+
+func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	// TODO query parameters for times, interval
 	ctx := r.Context()
 	timeStart := time.Now().AddDate(0, 0, -1)
@@ -149,56 +180,37 @@ func getPairVolume(w http.ResponseWriter, r *http.Request) error {
 	interval := time.Duration(0)
 	symbol := chi.URLParam(r, "pair")
 
-	pairs, err := db.GetVolumeByPair(ctx, symbol, timeStart, timeEnd, interval)
+	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, interval)
 	if err != nil {
 		return err
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"overTime": pairs,
+		"buckets": pairs,
 	})
 	return nil
 }
 
-func getPairLiquidity(w http.ResponseWriter, r *http.Request) error {
-	// TODO query parameters for times, interval
-	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
-	symbol := chi.URLParam(r, "pair")
+// func getTokenVolume(w http.ResponseWriter, r *http.Request) error {
+// 	// TODO query parameters for times, interval
+// 	ctx := r.Context()
+// 	timeStart := time.Now().AddDate(0, 0, -1)
+// 	timeEnd := time.Now()
+// 	interval := time.Duration(0)
+// 	symbol := chi.URLParam(r, "symbol")
 
-	pairs, err := db.GetLiquidityByPair(ctx, symbol, timeStart, timeEnd, interval)
-	if err != nil {
-		return err
-	}
+// 	tokens, err := db.GetVolumeByToken(ctx, symbol, timeStart, timeEnd, interval)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"overTime": pairs,
-	})
-	return nil
-}
+// 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+// 		"overTime": tokens,
+// 	})
+// 	return nil
+// }
 
-func getTokenVolume(w http.ResponseWriter, r *http.Request) error {
-	// TODO query parameters for times, interval
-	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
-	symbol := chi.URLParam(r, "symbol")
-
-	tokens, err := db.GetVolumeByToken(ctx, symbol, timeStart, timeEnd, interval)
-	if err != nil {
-		return err
-	}
-
-	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"overTime": tokens,
-	})
-	return nil
-}
-
-func getTokenLiquidity(w http.ResponseWriter, r *http.Request) error {
+func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	// TODO query parameters for times, interval
 	ctx := r.Context()
 	timeStart := time.Now().AddDate(0, 0, -1)
@@ -206,13 +218,13 @@ func getTokenLiquidity(w http.ResponseWriter, r *http.Request) error {
 	interval := time.Duration(0)
 	symbol := chi.URLParam(r, "symbol")
 
-	tokens, err := db.GetLiquidityByToken(ctx, symbol, timeStart, timeEnd, interval)
+	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
 	if err != nil {
 		return err
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"overTime": tokens,
+		"buckets": tokens,
 	})
 	return nil
 }

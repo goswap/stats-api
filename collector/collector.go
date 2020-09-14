@@ -73,6 +73,7 @@ func GetPairsFromChain(ctx context.Context, rpc *goclient.Client, fromIndex int)
 				TokenMap[pair.Token0.Address.Hex()] = pair.Token0
 				TokenMap[pair.Token1.Address.Hex()] = pair.Token1
 				// save USDC pairs for valuations
+				// DON'T REMOVE THIS FROM HERE YET, USED IN OTHER STUFF FOR NOW
 				if pair.Token0.Symbol == "USDC" {
 					USDCPairs[pair.Token1.Symbol] = pair
 					p, err := pair.PriceInUSD(ctx)
@@ -89,6 +90,7 @@ func GetPairsFromChain(ctx context.Context, rpc *goclient.Client, fromIndex int)
 					}
 					fmt.Printf("Current price of %v: %v\n", pair.Token0.Symbol, p)
 				}
+				// END DON'T REMOVE
 				return nil
 			})
 		}
@@ -156,7 +158,7 @@ func GetPairDetails(ctx context.Context, rpc *goclient.Client, contractAddress c
 			return nil, gotils.C(ctx).Errorf("get erc20 details: %v", err)
 		}
 	}
-
+	tb.Pair = tb.String()
 	return tb, err
 }
 
@@ -207,6 +209,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 
 	lcRef := fs.Collection(backend.CollectionTimestamps).Doc("last_check")
 	dsnap, err := lcRef.Get(ctx)
+	lc := &LastCheck{}
 	if err != nil {
 		if status.Code(err) != codes.NotFound {
 			return gotils.C(ctx).Errorf("error getting lastcheck: %v", err)
@@ -216,12 +219,17 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 		if err != nil {
 			return gotils.C(ctx).Errorf("Failed to get latest block number: %v", err)
 		}
-		startBlock = num.Int64() - 720 // about one hour
+		startBlock = num.Int64() - (720 * 2) // about 2 hours, going back 2 because stopAt will prevent the final hour
+		fmt.Printf("no last check\n")
 	} else {
-		lc := &LastCheck{}
 		err = dsnap.DataTo(lc)
 		if err != nil {
 			return gotils.C(ctx).Errorf("Failed to DataTo: %v", err)
+		}
+		if lc.LastCheckAt.Equal(stopAt) {
+			// too soon...
+			fmt.Printf("Last check == stopAt, cancelling...")
+			return nil
 		}
 		startBlock = lc.LastBlockNumber + 1
 		fmt.Printf("Last check at %v\nStarting at block %v\n", lc.LastCheckAt, startBlock)
@@ -229,6 +237,8 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 	if startBlock == 0 {
 		return gotils.C(ctx).Errorf("startBlock is zero")
 	}
+
+	fmt.Printf("fetching from block %v to %v\n", startBlock, endBlock)
 
 	db, _ := backend.NewFirestore2(ctx, fs)
 
@@ -254,23 +264,53 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 	}
 	pairs = append(pairs, newPairs...)
 
+	pairMap := map[string]*models.Pair{}
+	// set USDCPairs for prices
+	for _, pair := range pairs {
+		pc, err := contracts.NewPair(pair.Address, rpc)
+		if err != nil {
+			return gotils.C(ctx).Errorf("error on contracts.NewPair: %v", err)
+		}
+		pair.PairContract = pc
+		if pair.Token0.Symbol == "USDC" {
+			USDCPairs[pair.Token1.Symbol] = pair
+			p, err := pair.PriceInUSD(ctx)
+			if err != nil {
+				return gotils.C(ctx).Errorf("error getting price: %v", err)
+			}
+			fmt.Printf("Current price of %v: %v\n", pair.Token1.Symbol, p)
+		}
+		if pair.Token1.Symbol == "USDC" {
+			USDCPairs[pair.Token0.Symbol] = pair
+			p, err := pair.PriceInUSD(ctx)
+			if err != nil {
+				return gotils.C(ctx).Errorf("error getting price: %v", err)
+			}
+			fmt.Printf("Current price of %v: %v\n", pair.Token0.Symbol, p)
+		}
+		pairMap[pair.Address.Hex()] = pair
+	}
+
 	mostRecentBlockProcessed := startBlock
 	// tokenMap := map[string]*Token{}
 
 	totalBuckets := map[int64]*models.TotalBucket{}
 	pairBucketsMap := map[common.Address]map[int64]*models.PairBucket{}
 	tokenBucketsMap := map[common.Address]map[int64]*models.TokenBucket{}
-	pairLiquidities := map[common.Address]*models.PairLiquidity{}
+	// pairLiquidities := map[common.Address]*models.PairLiquidity{}
+	totalLiquidityUSD := decimal.Zero
 	for _, p := range pairs {
-		// tokenMap[p.Token0.Symbol] = p.Token0
-		// tokenMap[p.Token1.Symbol] = p.Token1
 
-		// get current volume, since last block checked
-		// store it for every minute, so we'll need timestamps for each block
+		pairLiquidity, err := fetchLiquidity(ctx, rpc, fs, p)
+		// pairLiquidities[p.Address] = pairLiquidity
+		fmt.Printf("%v liquidity: %v\n", p.String(), pairLiquidity.ValUSD())
+		totalLiquidityUSD = totalLiquidityUSD.Add(pairLiquidity.ValUSD())
+
 		swapEvents, err := GetSwapEvents(ctx, rpc, p.Address, startBlock, endBlock)
 		if err != nil {
 			return gotils.C(ctx).Errorf("error on GetSwapEvents: %v", err)
 		}
+		fmt.Printf("%v swap events for %v\n", len(swapEvents), p.String())
 
 		pairBuckets := pairBucketsMap[p.Address]
 		if pairBuckets == nil {
@@ -280,6 +320,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 		for _, ev := range swapEvents {
 			// Stop processing the last bucket, since it'll most likely be partial
 			if ev.Timestamp.After(stopAt) {
+				fmt.Printf("stopping since event is after stopAt")
 				break
 			}
 			// tally up for each pair
@@ -288,17 +329,18 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			bucketTime := ev.Timestamp.Truncate(truncateBy)
 			// fmt.Printf("bucketTime: %v\n", bucketTime)
 
-			pairBucket := pairBuckets[bucketTime.Unix()]
+			ut := bucketTime.Unix()
+			pairBucket := pairBuckets[ut]
 			if pairBucket == nil {
 				pairBucket = &models.PairBucket{Address: p.Address.Hex(), Pair: p.String(), Time: bucketTime}
-				pairBuckets[bucketTime.Unix()] = pairBucket
+				pairBuckets[ut] = pairBucket
 				pairBucket.Price0USD, err = PriceInUSD(ctx, p.Token0.Symbol)
 				if err != nil {
 					gotils.C(ctx).Printf("error getting price for %v: %v", p.Token0.Symbol, err)
 				}
 				pairBucket.Price1USD, err = PriceInUSD(ctx, p.Token1.Symbol)
 				if err != nil {
-					gotils.C(ctx).Printf("error getting price for %v: %v", p.Token0.Symbol, err)
+					gotils.C(ctx).Printf("error getting price for %v: %v", p.Token1.Symbol, err)
 				}
 			}
 			amount0In := utils.IntToDec(ev.Amount0In, p.Token0.Decimals)
@@ -312,6 +354,11 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 
 			volumeUSD := amount0In.Mul(pairBucket.Price0USD).Add(amount1In.Mul(pairBucket.Price1USD))
 			pairBucket.VolumeUSD = pairBucket.VolumeUSD.Add(volumeUSD)
+
+			// liquidity
+			pairBucket.Reserve0 = pairLiquidity.Reserve0
+			pairBucket.Reserve1 = pairLiquidity.Reserve1
+			pairBucket.TotalSupply = pairLiquidity.TotalSupply
 
 			if ev.BlockNumber > mostRecentBlockProcessed {
 				mostRecentBlockProcessed = ev.BlockNumber
@@ -329,34 +376,46 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			tokenBuckets1 = map[int64]*models.TokenBucket{}
 			tokenBucketsMap[p.Token1.Address] = tokenBuckets1
 		}
+
 		for t, v := range pairBuckets {
 			// fmt.Printf("%v %v 0in: %v 1in: %v, 0out: %v 1out: %v\n", t, v.Time, v.Amount0In, v.Amount1In, v.Amount0Out, v.Amount1Out)
 			t2 := time.Unix(t, 0)
 			// fmt.Printf("t2: %v\n", t2)
 
 			// token0
-			tokenBucket0 := tokenBuckets0[t]
-			if tokenBucket0 == nil {
-				tokenBucket0 = &models.TokenBucket{Address: p.Token0.Address.Hex(), Symbol: p.Token0.Symbol, Time: t2}
-				tokenBuckets0[t] = tokenBucket0
-				tokenBucket0.PriceUSD = v.Price0USD
+			{
+				tokenBucket0 := tokenBuckets0[t]
+				if tokenBucket0 == nil {
+					tokenBucket0 = &models.TokenBucket{Address: p.Token0.Address.Hex(), Symbol: p.Token0.Symbol, Time: t2}
+					tokenBucket0.PriceUSD = v.Price0USD
+					tokenBuckets0[t] = tokenBucket0
+				}
+				tokenBucket0.AmountIn = tokenBucket0.AmountIn.Add(v.Amount0In)
+				tokenBucket0.AmountOut = tokenBucket0.AmountOut.Add(v.Amount0Out)
+				volumeUSD := v.Amount0In.Mul(v.Price0USD)
+				tokenBucket0.VolumeUSD = tokenBucket0.VolumeUSD.Add(volumeUSD)
+
+				// liquidity - add each pairs liquidity for this token
+				tokenBucket0.Reserve = tokenBucket0.Reserve.Add(v.Reserve0)
+
 			}
-			tokenBucket0.AmountIn = tokenBucket0.AmountIn.Add(v.Amount0In)
-			tokenBucket0.AmountOut = tokenBucket0.AmountOut.Add(v.Amount0Out)
-			volumeUSD := v.Amount0In.Mul(v.Price0USD)
-			tokenBucket0.VolumeUSD = tokenBucket0.VolumeUSD.Add(volumeUSD)
 
 			// token1
-			tokenBucket1 := tokenBuckets1[t]
-			if tokenBucket1 == nil {
-				tokenBucket1 = &models.TokenBucket{Address: p.Token1.Address.Hex(), Symbol: p.Token1.Symbol, Time: t2}
-				tokenBuckets1[t] = tokenBucket1
-				tokenBucket1.PriceUSD = v.Price1USD
+			{
+				tokenBucket1 := tokenBuckets1[t]
+				if tokenBucket1 == nil {
+					tokenBucket1 = &models.TokenBucket{Address: p.Token1.Address.Hex(), Symbol: p.Token1.Symbol, Time: t2}
+					tokenBucket1.PriceUSD = v.Price1USD
+					tokenBuckets1[t] = tokenBucket1
+				}
+				tokenBucket1.AmountIn = tokenBucket1.AmountIn.Add(v.Amount1In)
+				tokenBucket1.AmountOut = tokenBucket1.AmountOut.Add(v.Amount1Out)
+				volumeUSD := v.Amount1In.Mul(v.Price1USD)
+				tokenBucket1.VolumeUSD = tokenBucket1.VolumeUSD.Add(volumeUSD)
+
+				// liquidity - add each pairs liquidity for this token
+				tokenBucket1.Reserve = tokenBucket1.Reserve.Add(v.Reserve1)
 			}
-			tokenBucket1.AmountIn = tokenBucket1.AmountIn.Add(v.Amount1In)
-			tokenBucket1.AmountOut = tokenBucket1.AmountOut.Add(v.Amount1Out)
-			volumeUSD = v.Amount1In.Mul(v.Price1USD)
-			tokenBucket1.VolumeUSD = tokenBucket1.VolumeUSD.Add(volumeUSD)
 
 			// totals
 			totalBucket := totalBuckets[t]
@@ -364,75 +423,72 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 				totalBucket = &models.TotalBucket{Time: t2}
 				totalBuckets[t] = totalBucket
 			}
-
 			totalBucket.VolumeUSD = totalBucket.VolumeUSD.Add(v.VolumeUSD)
 		}
 
-		pairLiquidity, err := fetchLiquidity(ctx, rpc, fs, p)
-		pairLiquidities[p.Address] = pairLiquidity
-
 	}
+	// tokenLiquidities := map[string]*models.TokenLiquidity{}
+	// for pairAddress, pliq := range pairLiquidities {
+	// 	val := pliq.ValUSD()
+	// 	totalLiquidityUSD = totalLiquidityUSD.Add(val)
+	// 	t := time.Now()
+	// 	t = t.Truncate(truncateBy)
 
-	totalLiquidityUSD := decimal.Zero
-	tokenLiquidities := map[string]*models.TokenLiquidity{}
-	for pairAddress, pliq := range pairLiquidities {
-		val := pliq.ValUSD()
-		totalLiquidityUSD = totalLiquidityUSD.Add(val)
-		t := time.Now()
-		t = t.Truncate(truncateBy)
+	// 	pair := pairMap[pairAddress.Hex()]
+	// 	// extract token liquidity
+	// 	tAddress := pair.Token0.Address
+	// 	tliq := tokenBucketsMap[tAddress]
+	// 	// if tliq == nil {
+	// 	// 	tliq = &models.TokenLiquidity{
+	// 	// 		Address: tAddress,
+	// 	// 	}
+	// 	// 	tliq.Time = t
+	// 	// 	// tliq.Symbol = pliq.Token0
+	// 	// 	tliq.Price = pliq.Price0USD
+	// 	// 	tokenLiquidities[tAddress] = tliq
+	// 	// }
+	// 	tliq.Reserve = tliq.Reserve.Add(pliq.Reserve0)
 
-		// extract token liquidity
-		tliq := tokenLiquidities[pliq.Token0]
-		if tliq == nil {
-			tliq = &models.TokenLiquidity{
-				Address: pliq.Token0,
-			}
-			tliq.Time = t
-			// tliq.Symbol = pliq.Token0
-			tliq.Price = pliq.Price0
-			tokenLiquidities[pliq.Token0] = tliq
-		}
-		tliq.Reserve = tliq.Reserve.Add(pliq.Reserve0)
+	// 	tAddress = pair.Token0.Address.Hex()
+	// 	tliq = tokenLiquidities[tAddress]
+	// 	// if tliq == nil {
+	// 	// 	tliq = &models.TokenLiquidity{
+	// 	// 		Address: tAddress,
+	// 	// 	}
+	// 	// 	tliq.Time = t
+	// 	// 	// tliq.Symbol = pliq.Token1
+	// 	// 	tliq.Price = pliq.Price1USD
+	// 	// 	tokenLiquidities[tAddress] = tliq
+	// 	// }
+	// 	tliq.Reserve = tliq.Reserve.Add(pliq.Reserve1)
 
-		tliq = tokenLiquidities[pliq.Token1]
-		if tliq == nil {
-			tliq = &models.TokenLiquidity{
-				Address: pliq.Token1,
-			}
-			tliq.Time = t
-			// tliq.Symbol = pliq.Token1
-			tliq.Price = pliq.Price1
-			tokenLiquidities[pliq.Token1] = tliq
-		}
-		tliq.Reserve = tliq.Reserve.Add(pliq.Reserve1)
+	// 	pliq.Time = t
+	// 	pliq.PreSave()
+	// 	_, err = fs.Collection(backend.CollectionPairLiquidity).Doc(fmt.Sprintf("%v_%v", pairAddress.Hex(), t.Unix())).Set(ctx, pliq)
+	// 	if err != nil {
+	// 		return gotils.C(ctx).Errorf("error writing to db: %v", err)
+	// 	}
+	// }
 
-		pliq.Time = t
-		pliq.PreSave()
-		_, err = fs.Collection(backend.CollectionPairLiquidity).Doc(fmt.Sprintf("%v_%v", pairAddress.Hex(), t.Unix())).Set(ctx, pliq)
-		if err != nil {
-			return gotils.C(ctx).Errorf("error writing to db: %v", err)
-		}
-	}
-
-	for address, tliq := range tokenLiquidities {
-		tliq.PreSave()
-		_, err = fs.Collection(backend.CollectionTokenLiquidity).Doc(fmt.Sprintf("%v_%v", address, tliq.Time.Unix())).Set(ctx, tliq)
-		if err != nil {
-			return gotils.C(ctx).Errorf("error writing to db: %v", err)
-		}
-	}
+	// for address, tliq := range tokenLiquidities {
+	// 	tliq.PreSave()
+	// 	_, err = fs.Collection(backend.CollectionTokenLiquidity).Doc(fmt.Sprintf("%v_%v", address, tliq.Time.Unix())).Set(ctx, tliq)
+	// 	if err != nil {
+	// 		return gotils.C(ctx).Errorf("error writing to db: %v", err)
+	// 	}
+	// }
 
 	// TODO: store all data in db here
-	fmt.Printf("\nPAIR VOLUME:\n\n")
+	fmt.Printf("\nSTORE PAIR DATA:\n\n")
 	v := decimal.Zero
 	for pairAddress, pbs := range pairBucketsMap {
-		fmt.Printf("Pair: %v\n", pairAddress)
+		fmt.Printf("Pair: %s\n", pairAddress.Hex())
 		vol := decimal.Zero
 		for t, pb := range pbs {
 			t2 := time.Unix(t, 0)
 			fmt.Printf("time bucket: %v -- %v\n", t, t2)
 			pb.PreSave()
-			_, err = fs.Collection(backend.CollectionPairVolume).Doc(fmt.Sprintf("%v_%v", pairAddress.Hex(), t)).Set(ctx, pb)
+			_, err = fs.Collection(backend.CollectionPairBuckets).Doc(fmt.Sprintf("%v_%v", pairAddress.Hex(), t)).Set(ctx, pb)
 			if err != nil {
 				return gotils.C(ctx).Errorf("error writing to db: %v", err)
 			}
@@ -443,15 +499,17 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 	}
 	fmt.Printf("total: %v\n", v)
 
-	fmt.Printf("\nTOKEN VOLUME:\n\n")
+	fmt.Printf("\nSTORE TOKEN DATA:\n\n")
 	v = decimal.Zero
-	for symbol, pbs := range tokenBucketsMap {
-		fmt.Printf("Symbol: %v\n", symbol)
+	for address, pbs := range tokenBucketsMap {
+		fmt.Printf("Token: %v\n", address.Hex())
 		vol := decimal.Zero
 		for t, pb := range pbs {
 			vol = vol.Add(pb.VolumeUSD)
+			t2 := time.Unix(t, 0)
+			fmt.Printf("time bucket: %v -- %v\n", t, t2)
 			pb.PreSave()
-			_, err = fs.Collection(backend.CollectionTokenVolume).Doc(fmt.Sprintf("%v_%v", symbol, t)).Set(ctx, pb)
+			_, err = fs.Collection(backend.CollectionTokenBuckets).Doc(fmt.Sprintf("%v_%v", address.Hex(), t)).Set(ctx, pb)
 			if err != nil {
 				return gotils.C(ctx).Errorf("error writing to db: %v", err)
 			}
@@ -477,8 +535,8 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 	}
 
 	// TODO: save last_check
-	lc := &LastCheck{
-		LastCheckAt:     time.Now(),
+	lc = &LastCheck{
+		LastCheckAt:     stopAt, // setting this so it will
 		LastBlockNumber: mostRecentBlockProcessed,
 	}
 	lcRef.Set(ctx, lc)
@@ -488,7 +546,6 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 
 func fetchLiquidity(ctx context.Context, rpc *goclient.Client, fs *firestore.Client, pair *models.Pair) (*models.PairLiquidity, error) {
 	t0 := pair.Token0
-
 	price0, err := PriceInUSD(ctx, t0.Symbol)
 	if err != nil {
 		var e *PriceNotFound
@@ -521,14 +578,15 @@ func fetchLiquidity(ctx context.Context, rpc *goclient.Client, fs *firestore.Cli
 	totalSupply := utils.IntToDec(totalSupplyBig, 18)
 
 	poolVal := &models.PairLiquidity{
-		Pair:        pair.String(),
-		Token0:      pair.Token0.Symbol,
-		Token1:      pair.Token1.Symbol,
+		Address: pair.Address.Hex(),
+		Pair:    pair.String(),
+		// Token0:      pair.Token0.Symbol,
+		// Token1:      pair.Token1.Symbol,
 		TotalSupply: totalSupply,
 		Reserve0:    reserve0,
 		Reserve1:    reserve1,
-		Price0:      price0,
-		Price1:      price1,
+		Price0USD:   price0,
+		Price1USD:   price1,
 	}
 	return poolVal, nil
 }
@@ -537,7 +595,6 @@ func storePairs(ctx context.Context, rpc *goclient.Client, fs *firestore.Client,
 	for _, p := range pairs {
 		fmt.Printf("Storing new pair: %v, index: %v\n", p.String(), p.Index)
 		// store tokens too while we're at it
-
 		t := p.Token0
 		t.PreSave()
 		_, err := fs.Collection(backend.CollectionTokens).Doc(t.Address.Hex()).Set(ctx, t)
