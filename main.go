@@ -9,6 +9,7 @@ import (
 	"github.com/dgraph-io/ristretto"
 	"github.com/go-chi/chi"
 	"github.com/goswap/stats-api/backend"
+	"github.com/shopspring/decimal"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
 	"github.com/treeder/gotils"
@@ -102,8 +103,48 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	liquidities := make(map[string]decimal.Decimal, len(ret))
+	volumes := make(map[string]decimal.Decimal, len(ret))
+
+	// get past 24 hours at 1 hour intervals
+	to := time.Now()
+	from := time.Now().Add(-24 * time.Hour)
+	interval := 1 * time.Hour
+
+	for _, r := range ret {
+		// TODO: we could parallelize this but should be cached most requests sooo
+		a := r.Address.Hex() // TODO hex?
+		liqs, err := db.GetLiquidityByToken(ctx, a, from, to, interval)
+		if err != nil {
+			// TODO log and move on
+			gcputils.Error().Printf("error getting liquidity for token: %v %v", a, err)
+			continue
+		}
+
+		var sum decimal.Decimal
+		for _, l := range liqs {
+			sum.Add(l.Reserve) // TODO * price?
+		}
+		liquidities[a] = sum
+
+		vols, err := db.GetVolumeByToken(ctx, a, from, to, interval)
+		if err != nil {
+			// TODO log and move on
+			gcputils.Error().Printf("error getting volume for token: %v %v", a, err)
+			continue
+		}
+
+		var sum2 decimal.Decimal
+		for _, v := range vols {
+			sum2.Add(v.VolumeUSD) // TODO * price?
+		}
+		volumes[a] = sum2
+	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"tokens": ret,
+		"tokens":      ret,
+		"liquidities": liquidities,
+		"volumes":     volumes,
 	})
 	return nil
 }
@@ -117,8 +158,50 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	liquidities := make(map[string]decimal.Decimal, len(ret))
+	volumes := make(map[string]decimal.Decimal, len(ret))
+
+	// get past 24 hours at 1 hour intervals
+	to := time.Now()
+	from := time.Now().Add(-24 * time.Hour)
+	interval := 1 * time.Hour
+
+	for _, r := range ret {
+		// TODO: we could parallelize this but should be cached most requests sooo
+		a := r.Address.Hex() // TODO hex?
+		liqs, err := db.GetLiquidityByPair(ctx, a, from, to, interval)
+		if err != nil {
+			// TODO log and move on
+			gcputils.Error().Printf("error getting liquidity for pair: %v %v", a, err)
+			log.Println(err) // TODO remove
+			continue
+		}
+
+		var sum decimal.Decimal
+		for _, l := range liqs {
+			sum.Add(l.TotalSupply) // TODO * price?
+		}
+		liquidities[a] = sum
+
+		vols, err := db.GetVolumeByPair(ctx, a, from, to, interval)
+		if err != nil {
+			// TODO log and move on
+			gcputils.Error().Printf("error getting volume for pair: %v %v", a, err)
+			log.Println(err)
+			continue
+		}
+
+		var sum2 decimal.Decimal
+		for _, v := range vols {
+			sum2.Add(v.VolumeUSD) // TODO * price?
+		}
+		volumes[a] = sum2
+	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"pairs": ret,
+		"pairs":       ret,
+		"liquidities": liquidities,
+		"volumes":     volumes,
 	})
 	return nil
 }
