@@ -119,6 +119,9 @@ func (td *Token) String() string {
 }
 
 type PairLiquidity struct {
+	// Address is the ID of the pair
+	Address string `firestore:"address" json:"address"`
+
 	Time   time.Time `firestore:"time" json:"time"`
 	Pair   string    `firestore:"pair" json:"pair"`
 	Token0 string    `firestore:"token0" json:"token0"`
@@ -163,6 +166,9 @@ func (pb *PairLiquidity) AfterLoad(ctx context.Context) {
 }
 
 type TokenLiquidity struct {
+	// Address is the ID of the token
+	Address string `firestore:"address" json:"address"`
+
 	Time   time.Time `firestore:"time" json:"time"`
 	Symbol string    `firestore:"symbol"`
 
@@ -191,6 +197,9 @@ func (pb *TokenLiquidity) AfterLoad(ctx context.Context) {
 }
 
 type PairBucket struct {
+	// Address is the ID of the pair
+	Address string `firestore:"address" json:"address"`
+
 	Time time.Time `firestore:"time" json:"time"`
 	Pair string    `firestore:"pair" json:"pair"`
 
@@ -236,6 +245,9 @@ func (pb *PairBucket) AfterLoad(ctx context.Context) {
 }
 
 type TokenBucket struct {
+	// Address is the ID of the token
+	Address string `firestore:"address" json:"address"`
+
 	Time   time.Time `firestore:"time"`
 	Symbol string    `firestore:"symbol"`
 

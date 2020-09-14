@@ -35,6 +35,14 @@ func main() {
 	// Setup logging, optional, typically will work fine without this, but depends on GCP service you're using
 	// gcputils.InitLogging()
 
+	// load up and cache top tokens and pairse
+	// pairs, err := db.GetPairs(ctx)
+	// if err != nil {
+	// 	log.Fatalf("error on GetPairs: %v\n", err)
+	// }
+
+	// db.GetTop
+
 	r := goapibase.InitRouter(ctx)
 	// Setup your routes
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

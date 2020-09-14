@@ -28,7 +28,7 @@ const (
 
 	CollectionPairVolume  = "pair_volume"
 	CollectionTokenVolume = "token_volume"
-	CollectionTotalVolume = "total_volume" // TODO: change the name of this to just totals?  or split liquidity into separate collection?
+	CollectionTotals      = "totals" // TODO: change the name of this to just totals?  or split liquidity into separate collection?
 
 )
 
