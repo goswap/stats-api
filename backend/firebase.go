@@ -206,7 +206,7 @@ func (fs *FirestoreBackend) GetToken(ctx context.Context, address string) (*mode
 func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, interval time.Duration) ([]*models.TotalBucket, error) {
 	var totals []*models.TotalBucket
 
-	iter := fs.c.Collection(CollectionTotalVolume).
+	iter := fs.c.Collection(CollectionTotals).
 		Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).

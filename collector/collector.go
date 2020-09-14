@@ -467,7 +467,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 		for t, pb := range totalBuckets {
 			pb.LiquidityUSD = totalLiquidityUSD
 			pb.PreSave()
-			_, err = fs.Collection(backend.CollectionTotalVolume).Doc(fmt.Sprintf("%v", t)).Set(ctx, pb)
+			_, err = fs.Collection(backend.CollectionTotals).Doc(fmt.Sprintf("%v", t)).Set(ctx, pb)
 			if err != nil {
 				return gotils.C(ctx).Errorf("error writing to db: %v", err)
 			}
