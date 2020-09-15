@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"encoding/binary"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/ristretto"
@@ -57,6 +58,9 @@ type cache struct {
 	cache *ristretto.Cache
 	ttl   time.Duration
 
+	// TODO(reed): we need this per key, really
+	once sync.Once
+
 	db StatsBackend
 }
 
@@ -83,17 +87,29 @@ func NewCacheBackend(ctx context.Context, db StatsBackend, ttl time.Duration) (S
 
 // TODO(reed): meh, this doesn't help much and obviates / adds func stack alloc, keep toying with this
 func (c *cache) check(key string, fill func() (interface{}, error)) (interface{}, error) {
-	if v, ok := c.cache.Get(key); ok {
+	v, ok := c.cache.Get(key)
+	if ok {
 		return v, nil
 	}
 
-	v, err := fill()
-	if err != nil {
-		return nil, err
-	}
+	var err error
+	c.once.Do(func() {
+		// check again, first in the herd wins
+		if v, ok = c.cache.Get(key); ok {
+			// NOTE: be sure to set outer scoped values! tricky..
+			return
+		}
 
-	c.cache.SetWithTTL(key, v, 0, c.ttl)
-	return v, nil
+		// TODO we should probably set if there's an error too, or we'll blow the db up
+		v, err = fill()
+		if err != nil {
+			return
+		}
+
+		c.cache.SetWithTTL(key, v, 0, c.ttl)
+	})
+
+	return v, err
 }
 
 func (c *cache) GetPairs(ctx context.Context) ([]*models.Pair, error) {
