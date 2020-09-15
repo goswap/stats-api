@@ -234,11 +234,11 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 
 // GetVolumeByPair returns the total volume by pair in the given time window
 // at the given duration (eg per minute, per day, etc).
-func (fs *FirestoreBackend) GetVolumeByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
+func (fs *FirestoreBackend) GetVolumeByPair(ctx context.Context, address string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
 	var pairs []*models.PairBucket
 
 	iter := fs.c.Collection(CollectionPairVolume).
-		Where("pair", "==", pair).
+		Where("address", "==", address).
 		Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
@@ -268,11 +268,11 @@ func (fs *FirestoreBackend) GetVolumeByPair(ctx context.Context, pair string, fr
 
 // GetLiquidityByPair returns the total liquidity by pair in the given time window
 // at the given duration (eg per minute, per day, etc).
-func (fs *FirestoreBackend) GetLiquidityByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairLiquidity, error) {
+func (fs *FirestoreBackend) GetLiquidityByPair(ctx context.Context, address string, from, to time.Time, interval time.Duration) ([]*models.PairLiquidity, error) {
 	var pairs []*models.PairLiquidity
 
 	iter := fs.c.Collection(CollectionPairLiquidity).
-		Where("pair", "==", pair).
+		Where("address", "==", address).
 		Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
@@ -301,11 +301,11 @@ func (fs *FirestoreBackend) GetLiquidityByPair(ctx context.Context, pair string,
 // GetVolumesByToken returns the total volume by token across all its pairs
 // in the given time window at the given duration (eg per minute, per day,
 // etc).
-func (fs *FirestoreBackend) GetVolumeByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
+func (fs *FirestoreBackend) GetVolumeByToken(ctx context.Context, address string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	var tokens []*models.TokenBucket
 
 	iter := fs.c.Collection(CollectionTokenVolume).
-		Where("symbol", "==", token).
+		Where("address", "==", address).
 		Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
@@ -335,12 +335,12 @@ func (fs *FirestoreBackend) GetVolumeByToken(ctx context.Context, token string, 
 // in the given time window at the given duration (eg per minute, per day,
 // etc).
 // TODO this one isn't hooked up in the collector yet? []TokenLiquidity?
-func (fs *FirestoreBackend) GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error) {
+func (fs *FirestoreBackend) GetLiquidityByToken(ctx context.Context, address string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error) {
 	// TODO
 	var tokens []*models.TokenLiquidity
 
 	iter := fs.c.Collection(CollectionTokenLiquidity).
-		Where("symbol", "==", token).
+		Where("address", "==", address).
 		Where("time", ">", from).
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).

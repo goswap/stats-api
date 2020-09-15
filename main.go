@@ -107,14 +107,14 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 	volumes := make(map[string]decimal.Decimal, len(ret))
 
 	// get past 24 hours at 1 hour intervals
-	to := time.Now()
-	from := time.Now().Add(-24 * time.Hour)
+	timeEnd := time.Now()
+	timeStart := timeEnd.AddDate(0, 0, -1)
 	interval := 1 * time.Hour
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
-		a := r.Address.Hex() // TODO hex?
-		liqs, err := db.GetLiquidityByToken(ctx, a, from, to, interval)
+		a := r.AddressHex // TODO hex?
+		liqs, err := db.GetLiquidityByToken(ctx, a, timeStart, timeEnd, interval)
 		if err != nil {
 			// TODO log and move on
 			gcputils.Error().Printf("error getting liquidity for token: %v %v", a, err)
@@ -127,7 +127,7 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		}
 		liquidities[a] = sum
 
-		vols, err := db.GetVolumeByToken(ctx, a, from, to, interval)
+		vols, err := db.GetVolumeByToken(ctx, a, timeStart, timeEnd, interval)
 		if err != nil {
 			// TODO log and move on
 			gcputils.Error().Printf("error getting volume for token: %v %v", a, err)
@@ -162,18 +162,17 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	volumes := make(map[string]decimal.Decimal, len(ret))
 
 	// get past 24 hours at 1 hour intervals
-	to := time.Now()
-	from := time.Now().Add(-24 * time.Hour)
+	timeEnd := time.Now()
+	timeStart := timeEnd.AddDate(0, 0, -1)
 	interval := 1 * time.Hour
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
 		a := r.Address.Hex() // TODO hex?
-		liqs, err := db.GetLiquidityByPair(ctx, a, from, to, interval)
+		liqs, err := db.GetLiquidityByPair(ctx, a, timeStart, timeEnd, interval)
 		if err != nil {
 			// TODO log and move on
 			gcputils.Error().Printf("error getting liquidity for pair: %v %v", a, err)
-			log.Println(err) // TODO remove
 			continue
 		}
 
@@ -183,11 +182,10 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		}
 		liquidities[a] = sum
 
-		vols, err := db.GetVolumeByPair(ctx, a, from, to, interval)
+		vols, err := db.GetVolumeByPair(ctx, a, timeStart, timeEnd, interval)
 		if err != nil {
 			// TODO log and move on
 			gcputils.Error().Printf("error getting volume for pair: %v %v", a, err)
-			log.Println(err)
 			continue
 		}
 
