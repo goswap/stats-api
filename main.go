@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -147,6 +148,10 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		statsMap[a] = stats
 	}
 
+	sort.Slice(ret, func(i, j int) bool {
+		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
+	})
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"tokens": ret,
 		"stats":  statsMap,
@@ -174,7 +179,7 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
 		a := r.Address.Hex() // TODO hex?
-		fmt.Println("A:", a)
+		// fmt.Println("A:", a)
 		liqs, err := db.GetPairBuckets(ctx, a, timeStart, timeEnd, interval)
 		if err != nil {
 			// TODO log and move on
@@ -185,12 +190,14 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		stats := &models.PairBucket{}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
+			fmt.Printf("%v LIQUIDITY %v %v %v %v\n", r.String(), l.Reserve0, l.Reserve1, l.Price0USD, l.Price1USD)
 			stats.Reserve0 = l.Reserve0
 			stats.Reserve1 = l.Reserve1
 			stats.Price0USD = l.Price0USD
 			stats.Price1USD = l.Price1USD
 			stats.TotalSupply = l.TotalSupply
 			stats.LiquidityUSD = l.Reserve0.Mul(l.Price0USD).Add(l.Reserve1.Mul(l.Price1USD))
+			fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
 			for _, l := range liqs {
 				stats.Amount0In = stats.Amount0In.Add(l.Amount0In)
 				stats.Amount1In = stats.Amount1In.Add(l.Amount1In)
@@ -199,6 +206,11 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		}
 		statsMap[a] = stats
 	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		// Using not less to make it descending order
+		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
+	})
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"pairs": ret,

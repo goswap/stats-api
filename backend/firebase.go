@@ -2,7 +2,6 @@ package backend
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -87,9 +86,9 @@ func (fs *FirestoreBackend) GetPairs(ctx context.Context) ([]*models.Pair, error
 		if err != nil {
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
-		fmt.Println("ADDRESS HEX:", p.AddressHex)
+		// fmt.Println("ADDRESS HEX:", p.AddressHex)
 		p.AfterLoad(ctx)
-		fmt.Println("ADDRESS.HEX():", p.Address.Hex())
+		// fmt.Println("ADDRESS.HEX():", p.Address.Hex())
 
 		pairs = append(pairs, p)
 

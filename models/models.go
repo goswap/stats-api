@@ -262,9 +262,10 @@ func (pb *PairBucket) AfterLoad(ctx context.Context) {
 	pb.Price1USD, _ = decimal.NewFromString(pb.Price1USDS)
 	pb.VolumeUSD, _ = decimal.NewFromString(pb.VolumeUSDS)
 
-	pb.TotalSupplyS = pb.TotalSupply.String()
-	pb.Reserve0S = pb.Reserve0.String()
-	pb.Reserve1S = pb.Reserve1.String()
+	pb.Reserve0, _ = decimal.NewFromString(pb.Reserve0S)
+	pb.Reserve1, _ = decimal.NewFromString(pb.Reserve1S)
+	pb.TotalSupply, _ = decimal.NewFromString(pb.TotalSupplyS)
+
 }
 
 func (s *PairBucket) ValUSD() decimal.Decimal {
