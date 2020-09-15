@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/goswap/stats-api/backend"
+	"github.com/goswap/stats-api/models"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
 	"github.com/treeder/gotils"
@@ -114,9 +116,42 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	statsMap := make(map[string]*models.TokenBucket, len(ret))
+	// volumes := make(map[string]decimal.Decimal, len(ret))
+
+	// get past 24 hours at 1 hour intervals
+	timeEnd := time.Now()
+	timeStart := timeEnd.AddDate(0, 0, -1)
+	interval := 1 * time.Hour
+
+	for _, r := range ret {
+		// TODO: we could parallelize this but should be cached most requests sooo
+		a := r.Address.Hex() // TODO hex?
+		liqs, err := db.GetTokenBuckets(ctx, a, timeStart, timeEnd, interval)
+		if err != nil {
+			// TODO log and move on
+			gcputils.Error().Printf("error getting liquidity for token: %v %v", a, err)
+			continue
+		}
+
+		stats := &models.TokenBucket{}
+		if len(liqs) > 0 {
+			l := liqs[len(liqs)-1]
+			stats.Reserve = l.Reserve
+			stats.PriceUSD = l.PriceUSD
+			stats.LiquidityUSD = l.Reserve.Mul(l.PriceUSD)
+			for _, l := range liqs {
+				stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
+			}
+		}
+		statsMap[a] = stats
+	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"tokens": ret,
+		"stats":  statsMap,
 	})
+
 	return nil
 }
 
@@ -128,9 +163,46 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+	statsMap := make(map[string]*models.PairBucket, len(ret))
+	// volumes := make(map[string]decimal.Decimal, len(ret))
+
+	// get past 24 hours at 1 hour intervals
+	timeEnd := time.Now()
+	timeStart := timeEnd.AddDate(0, 0, -1)
+	interval := 1 * time.Hour
+
+	for _, r := range ret {
+		// TODO: we could parallelize this but should be cached most requests sooo
+		a := r.Address.Hex() // TODO hex?
+		fmt.Println("A:", a)
+		liqs, err := db.GetPairBuckets(ctx, a, timeStart, timeEnd, interval)
+		if err != nil {
+			// TODO log and move on
+			gcputils.Error().Printf("error getting liquidity for token: %v %v", a, err)
+			continue
+		}
+
+		stats := &models.PairBucket{}
+		if len(liqs) > 0 {
+			l := liqs[len(liqs)-1]
+			stats.Reserve0 = l.Reserve0
+			stats.Reserve1 = l.Reserve1
+			stats.Price0USD = l.Price0USD
+			stats.Price1USD = l.Price1USD
+			stats.TotalSupply = l.TotalSupply
+			stats.LiquidityUSD = l.Reserve0.Mul(l.Price0USD).Add(l.Reserve1.Mul(l.Price1USD))
+			for _, l := range liqs {
+				stats.Amount0In = stats.Amount0In.Add(l.Amount0In)
+				stats.Amount1In = stats.Amount1In.Add(l.Amount1In)
+				stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
+			}
+		}
+		statsMap[a] = stats
+	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"pairs": ret,
+		"stats": statsMap,
 	})
 	return nil
 }

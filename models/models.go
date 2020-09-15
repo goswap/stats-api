@@ -17,7 +17,7 @@ import (
 // Pair represents a GoSwap pair
 type Pair struct {
 	Index   int            `firestore:"index" json:"index"`
-	Address common.Address `firestore:"-" json:"address"`
+	Address common.Address `firestore:"-" json:"-"` // this doesn't return the address properly formatted in JSON!
 
 	Pair string `firestore:"pair" json:"pair"` // stringified version, for easy reference
 
@@ -26,7 +26,7 @@ type Pair struct {
 	Token1       *Token          `firestore:"-" json:"token1"` // address of token
 
 	// for database
-	AddressHex    string `firestore:"address" json:"-"`
+	AddressHex    string `firestore:"address" json:"address"`
 	Token0Address string `firestore:"token0address" json:"-"`
 	Token1Address string `firestore:"token1address" json:"-"`
 }
@@ -91,7 +91,7 @@ func (td *Pair) PriceInUSD(ctx context.Context) (decimal.Decimal, error) {
 
 // Token represents an ERC20
 type Token struct {
-	Address common.Address `firestore:"-" json:"address"`
+	Address common.Address `firestore:"-" json:"-"`
 
 	Name        string          `firestore:"name" json:"name"`
 	Symbol      string          `firestore:"symbol" json:"symbol"`
@@ -103,7 +103,7 @@ type Token struct {
 	CMCPriceS    string `firestore:"CMCPrice" json:"-"`
 
 	// database
-	AddressHex string `firestore:"address" json:"-"`
+	AddressHex string `firestore:"address" json:"address"`
 }
 
 func (pb *Token) PreSave() {
@@ -216,6 +216,12 @@ type PairBucket struct {
 	Price1USD  decimal.Decimal `firestore:"-" json:"price1USD"`
 	VolumeUSD  decimal.Decimal `firestore:"-" json:"volumeUSD"` // in USD
 
+	// liquidity stuff:
+	TotalSupply  decimal.Decimal `firestore:"-" json:"totalSupply"`
+	Reserve0     decimal.Decimal `firestore:"-" json:"reserve0"`
+	Reserve1     decimal.Decimal `firestore:"-" json:"reserve1"`
+	LiquidityUSD decimal.Decimal `firestore:"-" json:"liquidityUSD"` // not stored, but returned in API
+
 	// For firebase
 	Amount0InS  string `firestore:"amount0In" json:"-"`
 	Amount1InS  string `firestore:"amount1In" json:"-"`
@@ -225,12 +231,6 @@ type PairBucket struct {
 	Price1USDS  string `firestore:"price1USD" json:"-"`
 	VolumeUSDS  string `firestore:"volumeUSD" json:"-"`
 
-	// liquidity stuff:
-	TotalSupply decimal.Decimal `firestore:"-" json:"totalSupply"`
-	Reserve0    decimal.Decimal `firestore:"-" json:"reserve0"`
-	Reserve1    decimal.Decimal `firestore:"-" json:"reserve1"`
-
-	// firebase stuff
 	TotalSupplyS string `firestore:"totalSupply" json:"-"`
 	Reserve0S    string `firestore:"reserve0" json:"-"`
 	Reserve1S    string `firestore:"reserve1" json:"-"`
@@ -278,14 +278,17 @@ type TokenBucket struct {
 	// Address is the ID of the token
 	Address string `firestore:"address" json:"address"`
 
-	Time   time.Time `firestore:"time"`
-	Symbol string    `firestore:"symbol"`
+	Time   time.Time `firestore:"time" json:"time"`
+	Symbol string    `firestore:"symbol" json:"symbol"`
 
 	AmountIn  decimal.Decimal `firestore:"-" json:"amountIn"`
 	AmountOut decimal.Decimal `firestore:"-" json:"amountOut"`
 	PriceUSD  decimal.Decimal `firestore:"-" json:"priceUSD"`
-	VolumeUSD decimal.Decimal `firestore:"-" json:"volumeUSD"` // in USD
-	Reserve   decimal.Decimal `firestore:"-" json:"reserve"`
+	VolumeUSD decimal.Decimal `firestore:"-" json:"volumeUSD"`
+
+	// liquidity
+	Reserve      decimal.Decimal `firestore:"-" json:"reserve"`
+	LiquidityUSD decimal.Decimal `firestore:"-" json:"liquidityUSD"` // not stored, but returned in API
 
 	// firebase bullshit:
 	AmountInS  string `firestore:"amountIn" json:"-"`
