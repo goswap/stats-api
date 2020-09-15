@@ -145,7 +145,7 @@ func (c *cache) GetTokens(ctx context.Context) ([]*models.Token, error) {
 }
 
 func (c *cache) GetToken(ctx context.Context, address string) (*models.Token, error) {
-	k := key(tokenEP, time.Time{}, time.Time{}, 0, "")
+	k := key(tokenEP, time.Time{}, time.Time{}, 0, address)
 	if v, ok := c.cache.Get(k); ok {
 		return v.(*models.Token), nil
 	}
