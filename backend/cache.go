@@ -59,7 +59,7 @@ type cache struct {
 	ttl   time.Duration
 
 	// TODO(reed): we need this per key, really
-	once sync.Once
+	mu sync.RWMutex
 
 	db StatsBackend
 }
@@ -87,132 +87,92 @@ func NewCacheBackend(ctx context.Context, db StatsBackend, ttl time.Duration) (S
 
 // TODO(reed): meh, this doesn't help much and obviates / adds func stack alloc, keep toying with this
 func (c *cache) check(key string, fill func() (interface{}, error)) (interface{}, error) {
+	c.mu.RLock()
 	v, ok := c.cache.Get(key)
+	c.mu.RUnlock()
 	if ok {
 		return v, nil
 	}
 
-	var err error
-	c.once.Do(func() {
-		// check again, first in the herd wins
-		if v, ok = c.cache.Get(key); ok {
-			// NOTE: be sure to set outer scoped values! tricky..
-			return
-		}
+	// TODO probably shouldn't hold global mutex over db call.. just for MVP
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-		// TODO we should probably set if there's an error too, or we'll blow the db up
-		v, err = fill()
-		if err != nil {
-			return
-		}
+	// check again, first in the herd wins
+	v, ok = c.cache.Get(key)
+	if ok {
+		return v, nil
+	}
 
-		c.cache.SetWithTTL(key, v, 0, c.ttl)
-	})
+	// TODO we should probably set if there's an error too, or we'll blow the db up
+	v, err := fill()
+	if err != nil {
+		return v, err
+	}
 
-	return v, err
+	c.cache.SetWithTTL(key, v, 0, c.ttl)
+	return v, nil
 }
 
 func (c *cache) GetPairs(ctx context.Context) ([]*models.Pair, error) {
 	k := key(pairsEP, time.Time{}, time.Time{}, 0, "")
-	if v, ok := c.cache.Get(k); ok {
-		return v.([]*models.Pair), nil
-	}
-
-	pairs, err := c.db.GetPairs(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, pairs, 0, c.ttl)
-	return pairs, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetPairs(ctx)
+	})
+	pairs, _ := v.([]*models.Pair)
+	return pairs, err
 }
 
 func (c *cache) GetPair(ctx context.Context, address string) (*models.Pair, error) {
 	k := key(pairEP, time.Time{}, time.Time{}, 0, address)
-	if v, ok := c.cache.Get(k); ok {
-		return v.(*models.Pair), nil
-	}
-
-	pair, err := c.db.GetPair(ctx, address)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, pair, 0, c.ttl)
-	return pair, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetPair(ctx, address)
+	})
+	pair, _ := v.(*models.Pair)
+	return pair, err
 }
 
 func (c *cache) GetTokens(ctx context.Context) ([]*models.Token, error) {
 	k := key(tokensEP, time.Time{}, time.Time{}, 0, "")
-	if v, ok := c.cache.Get(k); ok {
-		return v.([]*models.Token), nil
-	}
-
-	tokens, err := c.db.GetTokens(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, tokens, 0, c.ttl)
-	return tokens, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetTokens(ctx)
+	})
+	tokens, _ := v.([]*models.Token)
+	return tokens, err
 }
 
 func (c *cache) GetToken(ctx context.Context, address string) (*models.Token, error) {
 	k := key(tokenEP, time.Time{}, time.Time{}, 0, address)
-	if v, ok := c.cache.Get(k); ok {
-		return v.(*models.Token), nil
-	}
-
-	token, err := c.db.GetToken(ctx, address)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, token, 0, c.ttl)
-	return token, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetToken(ctx, address)
+	})
+	token, _ := v.(*models.Token)
+	return token, err
 }
 
 func (c *cache) GetTotals(ctx context.Context, from, to time.Time, interval time.Duration) ([]*models.TotalBucket, error) {
 	k := key(totalsEP, from, to, interval, "")
-	if v, ok := c.cache.Get(k); ok {
-		return v.([]*models.TotalBucket), nil
-	}
-
-	totals, err := c.db.GetTotals(ctx, from, to, interval)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, totals, 0, c.ttl)
-	return totals, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetTotals(ctx, from, to, interval)
+	})
+	totals, _ := v.([]*models.TotalBucket)
+	return totals, err
 }
 
 func (c *cache) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
 	k := key(pairBucketEP, from, to, interval, pair)
-	if v, ok := c.cache.Get(k); ok {
-		return v.([]*models.PairBucket), nil
-	}
-
-	pairs, err := c.db.GetPairBuckets(ctx, pair, from, to, interval)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, pairs, 0, c.ttl)
-	return pairs, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetPairBuckets(ctx, pair, from, to, interval)
+	})
+	pairs, _ := v.([]*models.PairBucket)
+	return pairs, err
 }
 
 func (c *cache) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	k := key(tokenBucketEP, from, to, interval, token)
-	if v, ok := c.cache.Get(k); ok {
-		return v.([]*models.TokenBucket), nil
-	}
-
-	tokens, err := c.db.GetTokenBuckets(ctx, token, from, to, interval)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.SetWithTTL(k, tokens, 0, c.ttl)
-	return tokens, nil
+	v, err := c.check(k, func() (interface{}, error) {
+		return c.db.GetTokenBuckets(ctx, token, from, to, interval)
+	})
+	tokens, _ := v.([]*models.TokenBucket)
+	return tokens, err
 }
