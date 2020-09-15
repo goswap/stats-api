@@ -10,21 +10,18 @@ import (
 	"github.com/treeder/gotils"
 )
 
-// idea: do now % to and if we're outside of interval, go fetch the data again.
-// issue being for daily we probably would rather update every hour. we could set
-// the cache to just blow out every hour too (or 10 minutes or whatever).
+// idea: round off 'from' and 'to' to the nearest interval, since most requests
+// will be for a similar window at a given interval (eg last 24h, hourly), this
+// will make most requests a cache hit until users can specify sliding windows
+// (TODO).  certain endpoints like listing pairs we would like to be hot as
+// well, and most key fields can be zero but all MUST use fixed key size to avoid
+// conflicts with other endpoints. Rounding off means aside from ttl, we're adding
+// 1 cache 'miss', we could always floor to fix this(TODO?), but it's pretty good.
 //
 // key prefix format:
 // -------------------------------------------
 // 1 byte endpoint id  | 8 bytes from | 8 bytes to | 8 bytes interval | N bytes rest of key
 //                       (use 0 if n/a)
-//
-// IMPORTANT!!!:
-// * if we round from and to then the cache doesn't get blown up, it's not perfect
-// but in practice it's very good and only adds an extra cache miss when rounding goes up rather
-// than down. TODO we could let caller do this but meh?
-// * all cache entries MUST use fixed key size, this doesn't effect performance much and
-// callers can send in mostly zero values easily enough
 
 type epID uint8
 
