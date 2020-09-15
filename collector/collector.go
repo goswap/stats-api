@@ -410,7 +410,6 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			// fmt.Printf("%v %v 0in: %v 1in: %v, 0out: %v 1out: %v\n", t, v.Time, v.Amount0In, v.Amount1In, v.Amount0Out, v.Amount1Out)
 			t2 := time.Unix(t, 0)
 			// fmt.Printf("t2: %v\n", t2)
-
 			// token0
 			{
 				tokenBucket0 := tokenBuckets0[t]
@@ -448,15 +447,13 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			totalBucket.VolumeUSD = totalBucket.VolumeUSD.Add(v.VolumeUSD)
 		}
 		for _, tb := range tokenBuckets0 {
-			tb.Reserve = pairLiquidity.Reserve0
+			tb.Reserve = tb.Reserve.Add(pairLiquidity.Reserve0)
 		}
 		for _, tb := range tokenBuckets1 {
-			tb.Reserve = pairLiquidity.Reserve1
+			tb.Reserve = tb.Reserve.Add(pairLiquidity.Reserve1)
 		}
 
 	}
-
-	// now
 
 	// TODO: store all data in db here
 	fmt.Printf("\nSTORE PAIR DATA:\n\n")
