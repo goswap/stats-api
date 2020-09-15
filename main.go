@@ -9,15 +9,20 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v3/rpc"
 	"github.com/goswap/stats-api/backend"
+	"github.com/goswap/stats-api/collector"
 	"github.com/goswap/stats-api/models"
+	"github.com/shopspring/decimal"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
 	"github.com/treeder/gotils"
 )
 
 var (
-	db backend.StatsBackend
+	db     *backend.FirestoreBackend
+	rpcURL = "https://rpc.gochain.io"
 )
 
 func main() {
@@ -99,6 +104,7 @@ func errorHandler(h myHandlerFunc) http.HandlerFunc {
 		if err != nil {
 			switch e := err.(type) {
 			case *gotils.HttpError:
+				gcputils.Error().Printf("%v", err)
 				gotils.WriteError(w, e.Code(), e)
 			default:
 				gcputils.Error().Printf("%v", err) // to cloud logging
@@ -155,8 +161,17 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
 	})
 
+	// remove 0 liquidity
+	ret2 := []*models.Token{}
+	for _, r := range ret {
+		if statsMap[r.Address.Hex()].LiquidityUSD.Equal(decimal.Zero) {
+			continue
+		}
+		ret2 = append(ret2, r)
+	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"tokens": ret,
+		"tokens": ret2,
 		"stats":  statsMap,
 	})
 
@@ -215,8 +230,16 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
 	})
 
+	ret2 := []*models.Pair{}
+	for _, r := range ret {
+		if statsMap[r.Address.Hex()].LiquidityUSD.Equal(decimal.Zero) {
+			continue
+		}
+		ret2 = append(ret2, r)
+	}
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"pairs": ret,
+		"pairs": ret2,
 		"stats": statsMap,
 	})
 	return nil
@@ -317,8 +340,23 @@ func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 }
 
 func collect(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	t := time.Now()
+	ctx = gotils.With(ctx, "started_at", t)
+	l := gcputils.With("started_at", t)
 	// prevent this from running more than once per hour
-	gcputils.Info().Println("testing...")
-	gotils.WriteMessage(w, http.StatusOK, "hi")
+	l.Info().Println("Collector starting...")
+	rpcClient, err := rpc.Dial(rpcURL)
+	if err != nil {
+		return gotils.C(ctx).Errorf("failed to dial rpc %q: %v", rpcURL, err)
+	}
+	rpc := goclient.NewClient(rpcClient)
+
+	err = collector.FetchData(ctx, rpc, db.Client())
+	if err != nil {
+		return gotils.C(ctx).Errorf("error on collector.FetchData: %v", err)
+	}
+	l.Info().Println("Collector complete")
+	gotils.WriteMessage(w, http.StatusOK, "ok")
 	return nil
 }

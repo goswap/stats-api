@@ -228,7 +228,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 		}
 		if lc.LastCheckAt.Equal(stopAt) {
 			// too soon...
-			fmt.Printf("Last check == stopAt, cancelling...")
+			fmt.Printf("Last check == stopAt, cancelling...\n")
 			return nil
 		}
 		startBlock = lc.LastBlockNumber + 1
