@@ -37,7 +37,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("couldn't init firebase: %v\n", err)
 	}
-	db = dbfs
+
+	// TODO we could add more fine grained ttl, this is a stand in.
+	cache, err := backend.NewCacheBackend(ctx, dbfs, 1*time.Minute)
+	if err != nil {
+		log.Fatalf("couldn't set up cache: %v\n", err)
+	}
+
+	db = cache
 
 	// Setup logging, optional, typically will work fine without this, but depends on GCP service you're using
 	// gcputils.InitLogging()
@@ -74,7 +81,6 @@ func main() {
 		r.Route("/{symbol}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
 			r.Get("/buckets", errorHandler(getTokenBuckets))
-			// r.Get("/volume", errorHandler(getTokenVolume))
 		})
 	})
 	r.Route("/pairs", func(r chi.Router) {
@@ -82,7 +88,6 @@ func main() {
 		r.Route("/{pair}", func(r chi.Router) {
 			// r.Use(ArticleCtx)
 			r.Get("/buckets", errorHandler(getPairBuckets))
-			// r.Get("/liquidity", errorHandler(getPairLiquidity))
 		})
 	})
 	r.Route("/totals", func(r chi.Router) {
@@ -197,7 +202,6 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
 		a := r.Address.Hex() // TODO hex?
-		// fmt.Println("A:", a)
 		liqs, err := db.GetPairBuckets(ctx, a, timeStart, timeEnd, interval)
 		if err != nil {
 			// TODO log and move on
@@ -263,25 +267,6 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// func getPairVolume(w http.ResponseWriter, r *http.Request) error {
-// 	// TODO query parameters for times, interval
-// 	ctx := r.Context()
-// 	timeStart := time.Now().AddDate(0, 0, -1)
-// 	timeEnd := time.Now()
-// 	interval := time.Duration(0)
-// 	symbol := chi.URLParam(r, "pair")
-
-// 	pairs, err := db.GetVolumeByPair(ctx, symbol, timeStart, timeEnd, interval)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-// 		"overTime": pairs,
-// 	})
-// 	return nil
-// }
-
 func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	// TODO query parameters for times, interval
 	ctx := r.Context()
@@ -300,25 +285,6 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	})
 	return nil
 }
-
-// func getTokenVolume(w http.ResponseWriter, r *http.Request) error {
-// 	// TODO query parameters for times, interval
-// 	ctx := r.Context()
-// 	timeStart := time.Now().AddDate(0, 0, -1)
-// 	timeEnd := time.Now()
-// 	interval := time.Duration(0)
-// 	symbol := chi.URLParam(r, "symbol")
-
-// 	tokens, err := db.GetVolumeByToken(ctx, symbol, timeStart, timeEnd, interval)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-// 		"overTime": tokens,
-// 	})
-// 	return nil
-// }
 
 func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	// TODO query parameters for times, interval
