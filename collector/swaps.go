@@ -85,12 +85,12 @@ func GetSwapEvents(ctx context.Context, rpc *goclient.Client, pairAddress common
 			event.TxFrom = *tx.From
 
 			// todo: get timestamp if block number has changed, see below, set it on all events until it changes again
-			if currentTimeStamp.IsZero() {
-				currentTimeStamp, err = GetTimestampByBlockNumber(ctx, rpc, event.BlockNumber)
-			} else if currentBlockNumber != event.BlockNumber {
+			if currentBlockNumber != event.BlockNumber || currentTimeStamp.IsZero() {
+				// then get new timestamp
 				currentTimeStamp, err = GetTimestampByBlockNumber(ctx, rpc, event.BlockNumber)
 			}
 			event.Timestamp = currentTimeStamp
+			currentBlockNumber = event.BlockNumber
 		}
 		currentBlock = toBlock + 1
 	}

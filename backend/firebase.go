@@ -310,7 +310,7 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	var tokens []*models.TokenBucket
 
-	c := fs.c.Collection(CollectionPairBuckets)
+	c := fs.c.Collection(CollectionTokenBuckets)
 	q := c.Query
 	if token != "" {
 		q = q.Where("address", "==", token)

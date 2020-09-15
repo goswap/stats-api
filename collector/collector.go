@@ -319,7 +319,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 		}
 		for _, ev := range swapEvents {
 			// Stop processing the last bucket, since it'll most likely be partial
-			if ev.Timestamp.After(stopAt) {
+			if !ev.Timestamp.Before(stopAt) { // using before so it doesn't include if it's equal
 				fmt.Printf("stopping since event is after stopAt")
 				break
 			}
