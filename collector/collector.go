@@ -340,11 +340,11 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 				pairBuckets[ut] = pairBucket
 				pairBucket.Price0USD, err = PriceInUSD(ctx, p.Token0.Symbol)
 				if err != nil {
-					gotils.C(ctx).Printf("error getting price for %v: %v", p.Token0.Symbol, err)
+					gotils.C(ctx).Printf("error getting price for %v: %v\n", p.Token0.Symbol, err)
 				}
 				pairBucket.Price1USD, err = PriceInUSD(ctx, p.Token1.Symbol)
 				if err != nil {
-					gotils.C(ctx).Printf("error getting price for %v: %v", p.Token1.Symbol, err)
+					gotils.C(ctx).Printf("error getting price for %v: %v\n", p.Token1.Symbol, err)
 				}
 
 				// liquidity
@@ -373,7 +373,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 		fmt.Printf("%v PairBuckets made: %v\n", p.String(), bucketsMade)
 		if bucketsMade == 0 {
 			// we'll make one for prior hour, just so we get the liquidity right
-			fmt.Printf("Making PairBucket for liquidity")
+			fmt.Printf("Making PairBucket for liquidity\n")
 
 			bucketTime := time.Now().Add(-(1 * time.Hour)).Truncate(truncateBy)
 			ut := bucketTime.Unix()
@@ -381,11 +381,11 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			pairBuckets[ut] = pairBucket
 			pairBucket.Price0USD, err = PriceInUSD(ctx, p.Token0.Symbol)
 			if err != nil {
-				gotils.C(ctx).Printf("error getting price for %v: %v", p.Token0.Symbol, err)
+				gotils.C(ctx).Printf("error getting price for %v: %v\n", p.Token0.Symbol, err)
 			}
 			pairBucket.Price1USD, err = PriceInUSD(ctx, p.Token1.Symbol)
 			if err != nil {
-				gotils.C(ctx).Printf("error getting price for %v: %v", p.Token1.Symbol, err)
+				gotils.C(ctx).Printf("error getting price for %v: %v\n", p.Token1.Symbol, err)
 			}
 
 			// liquidity
