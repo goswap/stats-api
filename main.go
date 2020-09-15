@@ -138,11 +138,14 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		stats := &models.TokenBucket{}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
+			// fmt.Printf("%v LIQUIDITY %v %v\n", r.String(), l.Reserve, l.PriceUSD)
 			stats.Reserve = l.Reserve
 			stats.PriceUSD = l.PriceUSD
 			stats.LiquidityUSD = l.Reserve.Mul(l.PriceUSD)
+			// fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
 			for _, l := range liqs {
 				stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
+				// fmt.Printf("%v LIQUIDITY XXX %v %v\n", r.String(), l.Reserve, l.PriceUSD)
 			}
 		}
 		statsMap[a] = stats

@@ -342,6 +342,12 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 				if err != nil {
 					gotils.C(ctx).Printf("error getting price for %v: %v", p.Token1.Symbol, err)
 				}
+
+				// liquidity
+				pairBucket.Reserve0 = pairLiquidity.Reserve0
+				pairBucket.Reserve1 = pairLiquidity.Reserve1
+				pairBucket.TotalSupply = pairLiquidity.TotalSupply
+
 			}
 			amount0In := utils.IntToDec(ev.Amount0In, p.Token0.Decimals)
 			amount1In := utils.IntToDec(ev.Amount1In, p.Token1.Decimals)
@@ -354,11 +360,6 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 
 			volumeUSD := amount0In.Mul(pairBucket.Price0USD).Add(amount1In.Mul(pairBucket.Price1USD))
 			pairBucket.VolumeUSD = pairBucket.VolumeUSD.Add(volumeUSD)
-
-			// liquidity
-			pairBucket.Reserve0 = pairLiquidity.Reserve0
-			pairBucket.Reserve1 = pairLiquidity.Reserve1
-			pairBucket.TotalSupply = pairLiquidity.TotalSupply
 
 			if ev.BlockNumber > mostRecentBlockProcessed {
 				mostRecentBlockProcessed = ev.BlockNumber
