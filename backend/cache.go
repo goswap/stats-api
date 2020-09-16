@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"encoding/binary"
+	"math"
 	"sync"
 	"time"
 
@@ -86,7 +87,7 @@ func NewCacheBackend(ctx context.Context, db StatsBackend, ttl time.Duration) (S
 }
 
 // TODO(reed): meh, this doesn't help much and obviates / adds func stack alloc, keep toying with this
-func (c *cache) check(key string, fill func() (interface{}, error)) (interface{}, error) {
+func (c *cache) check(key string, ttl time.Duration, fill func() (interface{}, error)) (interface{}, error) {
 	c.mu.RLock()
 	v, ok := c.cache.Get(key)
 	c.mu.RUnlock()
@@ -110,13 +111,13 @@ func (c *cache) check(key string, fill func() (interface{}, error)) (interface{}
 		return v, err
 	}
 
-	c.cache.SetWithTTL(key, v, 0, c.ttl)
+	c.cache.SetWithTTL(key, v, 0, ttl)
 	return v, nil
 }
 
 func (c *cache) GetPairs(ctx context.Context) ([]*models.Pair, error) {
 	k := key(pairsEP, time.Time{}, time.Time{}, 0, "")
-	v, err := c.check(k, func() (interface{}, error) {
+	v, err := c.check(k, c.ttl, func() (interface{}, error) {
 		return c.db.GetPairs(ctx)
 	})
 	pairs, _ := v.([]*models.Pair)
@@ -125,7 +126,7 @@ func (c *cache) GetPairs(ctx context.Context) ([]*models.Pair, error) {
 
 func (c *cache) GetPair(ctx context.Context, address string) (*models.Pair, error) {
 	k := key(pairEP, time.Time{}, time.Time{}, 0, address)
-	v, err := c.check(k, func() (interface{}, error) {
+	v, err := c.check(k, c.ttl, func() (interface{}, error) {
 		return c.db.GetPair(ctx, address)
 	})
 	pair, _ := v.(*models.Pair)
@@ -134,7 +135,7 @@ func (c *cache) GetPair(ctx context.Context, address string) (*models.Pair, erro
 
 func (c *cache) GetTokens(ctx context.Context) ([]*models.Token, error) {
 	k := key(tokensEP, time.Time{}, time.Time{}, 0, "")
-	v, err := c.check(k, func() (interface{}, error) {
+	v, err := c.check(k, c.ttl, func() (interface{}, error) {
 		return c.db.GetTokens(ctx)
 	})
 	tokens, _ := v.([]*models.Token)
@@ -143,7 +144,7 @@ func (c *cache) GetTokens(ctx context.Context) ([]*models.Token, error) {
 
 func (c *cache) GetToken(ctx context.Context, address string) (*models.Token, error) {
 	k := key(tokenEP, time.Time{}, time.Time{}, 0, address)
-	v, err := c.check(k, func() (interface{}, error) {
+	v, err := c.check(k, c.ttl, func() (interface{}, error) {
 		return c.db.GetToken(ctx, address)
 	})
 	token, _ := v.(*models.Token)
@@ -152,7 +153,8 @@ func (c *cache) GetToken(ctx context.Context, address string) (*models.Token, er
 
 func (c *cache) GetTotals(ctx context.Context, from, to time.Time, interval time.Duration) ([]*models.TotalBucket, error) {
 	k := key(totalsEP, from, to, interval, "")
-	v, err := c.check(k, func() (interface{}, error) {
+	ttl := time.Duration(math.Max(float64(interval), float64(c.ttl)))
+	v, err := c.check(k, ttl, func() (interface{}, error) {
 		return c.db.GetTotals(ctx, from, to, interval)
 	})
 	totals, _ := v.([]*models.TotalBucket)
@@ -161,7 +163,8 @@ func (c *cache) GetTotals(ctx context.Context, from, to time.Time, interval time
 
 func (c *cache) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
 	k := key(pairBucketEP, from, to, interval, pair)
-	v, err := c.check(k, func() (interface{}, error) {
+	ttl := time.Duration(math.Max(float64(interval), float64(c.ttl)))
+	v, err := c.check(k, ttl, func() (interface{}, error) {
 		return c.db.GetPairBuckets(ctx, pair, from, to, interval)
 	})
 	pairs, _ := v.([]*models.PairBucket)
@@ -170,7 +173,8 @@ func (c *cache) GetPairBuckets(ctx context.Context, pair string, from, to time.T
 
 func (c *cache) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	k := key(tokenBucketEP, from, to, interval, token)
-	v, err := c.check(k, func() (interface{}, error) {
+	ttl := time.Duration(math.Max(float64(interval), float64(c.ttl)))
+	v, err := c.check(k, ttl, func() (interface{}, error) {
 		return c.db.GetTokenBuckets(ctx, token, from, to, interval)
 	})
 	tokens, _ := v.([]*models.TokenBucket)

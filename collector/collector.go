@@ -240,7 +240,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 
 	fmt.Printf("fetching from block %v to %v\n", startBlock, endBlock)
 
-	db, _ := backend.NewFirestore2(ctx, fs)
+	db, _ := backend.NewFirestore(ctx, fs)
 
 	// load tokens into the cache
 	_, err = db.GetTokens(ctx)

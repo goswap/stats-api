@@ -7,10 +7,8 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/dgraph-io/ristretto"
 	"github.com/goswap/stats-api/models"
-	"github.com/treeder/firetils"
 	"github.com/treeder/gotils"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 )
 
 // TODO we need to normalize the times probably? ie fix dirty data
@@ -37,19 +35,7 @@ type FirestoreBackend struct {
 	cache *ristretto.Cache
 }
 
-func NewFirestore(ctx context.Context, projectID string, opts []option.ClientOption) (*FirestoreBackend, error) {
-	firebaseApp, err := firetils.New(ctx, projectID, opts)
-	if err != nil {
-		return nil, err
-	}
-	fs, err := firebaseApp.Firestore(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewFirestore2(ctx, fs)
-}
-func NewFirestore2(ctx context.Context, c *firestore.Client) (*FirestoreBackend, error) {
+func NewFirestore(ctx context.Context, c *firestore.Client) (*FirestoreBackend, error) {
 	cache, err := ristretto.NewCache(&ristretto.Config{
 		NumCounters: 1e7,             // number of keys to track frequency of (10M).
 		MaxCost:     100 << (10 * 2), // maximum cost of cache (100MB), cloud run has 256MB by default
@@ -60,10 +46,6 @@ func NewFirestore2(ctx context.Context, c *firestore.Client) (*FirestoreBackend,
 	}
 
 	return &FirestoreBackend{c: c, cache: cache}, nil
-}
-
-func (fs *FirestoreBackend) Client() *firestore.Client {
-	return fs.c
 }
 
 // GetPairs returns all available pairs
@@ -95,6 +77,7 @@ func (fs *FirestoreBackend) GetPairs(ctx context.Context) ([]*models.Pair, error
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 
+		// TODO(reed): these values will get stale, like supply, need ttl...
 		fs.cache.Set(p.Address.Hex(), p, 0)
 	}
 	return pairs, nil
@@ -199,6 +182,7 @@ func (fs *FirestoreBackend) GetToken(ctx context.Context, address string) (*mode
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		t.AfterLoad(ctx)
+		// TODO(reed): this value will get stale (volume, cmcprice)
 		fs.cache.Set(address, t, 0)
 		return t, nil
 	}
@@ -216,6 +200,9 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
 
+	// interval edge
+	var ie *models.TotalBucket
+
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -230,7 +217,26 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		t.AfterLoad(ctx)
-		totals = append(totals, t)
+
+		// TODO(reed): for now, we're rolling these up just before returning not in db yet
+		// roll up, if required
+		if ie == nil {
+			ie = t
+		} else if t.Time.Sub(ie.Time) >= interval {
+			// put last one in, then shift the window
+			totals = append(totals, ie)
+			ie = t
+		} else {
+			// add volume
+			ie.VolumeUSD.Add(t.VolumeUSD)
+			// liquidity is just the last data point in any hour (don't add)
+			ie.LiquidityUSD = t.LiquidityUSD
+		}
+	}
+
+	// insert last entry
+	if ie != nil {
+		totals = append(totals, ie)
 	}
 
 	return totals, nil
