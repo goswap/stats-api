@@ -86,9 +86,7 @@ func (fs *FirestoreBackend) GetPairs(ctx context.Context) ([]*models.Pair, error
 		if err != nil {
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
-		// fmt.Println("ADDRESS HEX:", p.AddressHex)
 		p.AfterLoad(ctx)
-		// fmt.Println("ADDRESS.HEX():", p.Address.Hex())
 
 		pairs = append(pairs, p)
 
@@ -238,8 +236,6 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 	return totals, nil
 }
 
-// GetPairBucket returns the total volume by pair in the given time window
-// at the given duration (eg per minute, per day, etc).
 func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
 	var pairs []*models.PairBucket
 
@@ -275,41 +271,6 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 	return pairs, nil
 }
 
-// GetLiquidityByPair returns the total liquidity by pair in the given time window
-// at the given duration (eg per minute, per day, etc).
-// func (fs *FirestoreBackend) GetLiquidityByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairLiquidity, error) {
-// 	var pairs []*models.PairLiquidity
-
-// 	iter := fs.c.Collection(CollectionPairLiquidity).
-// 		Where("address", "==", pair).
-// 		Where("time", ">", from).
-// 		Where("time", "<", to).
-// 		OrderBy("time", firestore.Asc).
-// 		Documents(ctx)
-
-// 	for {
-// 		doc, err := iter.Next()
-// 		if err == iterator.Done {
-// 			break
-// 		}
-// 		if err != nil {
-// 			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
-// 		}
-// 		p := new(models.PairLiquidity)
-// 		err = doc.DataTo(p)
-// 		if err != nil {
-// 			return nil, gotils.C(ctx).Errorf("%v", err)
-// 		}
-// 		p.AfterLoad(ctx)
-// 		pairs = append(pairs, p)
-// 	}
-
-// 	return pairs, nil
-// }
-
-// GetTokenBuckets returns the total volume by token across all its pairs
-// in the given time window at the given duration (eg per minute, per day,
-// etc).
 func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	var tokens []*models.TokenBucket
 
@@ -342,38 +303,3 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 
 	return tokens, nil
 }
-
-// GetLiquidityByToken returns the total liquidity by token across all its pairs
-// in the given time window at the given duration (eg per minute, per day,
-// etc).
-// TODO this one isn't hooked up in the collector yet? []TokenLiquidity?
-// func (fs *FirestoreBackend) GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error) {
-// 	// TODO
-// 	var tokens []*models.TokenLiquidity
-
-// 	iter := fs.c.Collection(CollectionTokenLiquidity).
-// 		Where("address", "==", token).
-// 		Where("time", ">", from).
-// 		Where("time", "<", to).
-// 		OrderBy("time", firestore.Asc).
-// 		Documents(ctx)
-
-// 	for {
-// 		doc, err := iter.Next()
-// 		if err == iterator.Done {
-// 			break
-// 		}
-// 		if err != nil {
-// 			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
-// 		}
-// 		t := new(models.TokenLiquidity)
-// 		err = doc.DataTo(t)
-// 		if err != nil {
-// 			return nil, gotils.C(ctx).Errorf("%v", err)
-// 		}
-// 		t.AfterLoad(ctx)
-// 		tokens = append(tokens, t)
-// 	}
-
-// 	return tokens, nil
-// }
