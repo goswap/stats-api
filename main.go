@@ -127,10 +127,14 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 	statsMap := make(map[string]*models.TokenBucket, len(ret))
 	// volumes := make(map[string]decimal.Decimal, len(ret))
 
-	// get past 24 hours at 1 hour intervals
-	timeEnd := time.Now()
-	timeStart := timeEnd.AddDate(0, 0, -1)
-	interval := 1 * time.Hour
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
@@ -142,9 +146,14 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 			continue
 		}
 
-		stats := &models.TokenBucket{}
+		stats := &models.TokenBucket{
+			Address: a,
+			Symbol:  r.Symbol,
+		}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
+			stats.Time = l.Time
+
 			// fmt.Printf("%v LIQUIDITY %v %v\n", r.String(), l.Reserve, l.PriceUSD)
 			stats.Reserve = l.Reserve
 			stats.PriceUSD = l.PriceUSD
@@ -190,10 +199,14 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	statsMap := make(map[string]*models.PairBucket, len(ret))
 	// volumes := make(map[string]decimal.Decimal, len(ret))
 
-	// get past 24 hours at 1 hour intervals
-	timeEnd := time.Now()
-	timeStart := timeEnd.AddDate(0, 0, -1)
-	interval := 1 * time.Hour
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
@@ -205,9 +218,14 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 			continue
 		}
 
-		stats := &models.PairBucket{}
+		stats := &models.PairBucket{
+			Address: a,
+			Pair:    r.Pair,
+		}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
+			stats.Time = l.Time
+
 			fmt.Printf("%v LIQUIDITY %v %v %v %v\n", r.String(), l.Reserve0, l.Reserve1, l.Price0USD, l.Price1USD)
 			stats.Reserve0 = l.Reserve0
 			stats.Reserve1 = l.Reserve1
