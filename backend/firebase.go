@@ -11,8 +11,6 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-// TODO we need to normalize the times probably? ie fix dirty data
-// TODO roll up into interval here?
 // TODO we probably want to set a max of data to return? or do something to prevent returning 3 years at 1 second, for example.
 
 const (
@@ -24,8 +22,6 @@ const (
 	CollectionPairBuckets  = "pair_buckets"
 	CollectionTokenBuckets = "token_buckets"
 
-	// CollectionPairVolume  = "pair_volume"
-	// CollectionTokenVolume = "token_volume"
 	CollectionTotals = "totals" // TODO: change the name of this to just totals?  or split liquidity into separate collection?
 
 )
@@ -228,7 +224,7 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 			ie = t
 		} else {
 			// add volume
-			ie.VolumeUSD.Add(t.VolumeUSD)
+			ie.VolumeUSD = ie.VolumeUSD.Add(t.VolumeUSD)
 			// liquidity is just the last data point in any hour (don't add)
 			ie.LiquidityUSD = t.LiquidityUSD
 		}
@@ -255,6 +251,8 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
 
+	var ie *models.PairBucket
+
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -269,7 +267,35 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		p.AfterLoad(ctx)
-		pairs = append(pairs, p)
+
+		// TODO(reed): for now, we're rolling these up just before returning not in db yet
+		// roll up, if required
+		if ie == nil {
+			ie = p
+		} else if p.Time.Sub(ie.Time) >= interval {
+			// put last one in, then shift the window
+			pairs = append(pairs, ie)
+			ie = p
+		} else {
+			// add volume stuff
+			ie.Amount0In = ie.Amount0In.Add(p.Amount0In)
+			ie.Amount1In = ie.Amount1In.Add(p.Amount1In)
+			ie.Amount0Out = ie.Amount0Out.Add(p.Amount0Out)
+			ie.Amount1Out = ie.Amount1Out.Add(p.Amount1Out)
+			ie.VolumeUSD = ie.VolumeUSD.Add(p.VolumeUSD)
+
+			// liquidity/price is just the last data point in any hour (don't add)
+			ie.Price0USD = p.Price0USD
+			ie.Price1USD = p.Price1USD
+			ie.TotalSupply = p.TotalSupply
+			ie.Reserve0 = p.Reserve0
+			ie.Reserve1 = p.Reserve1
+			ie.LiquidityUSD = p.LiquidityUSD
+		}
+	}
+
+	if ie != nil {
+		pairs = append(pairs, ie)
 	}
 
 	// TODO: handle pair not found or bad pair input (validating backend wrapper for testing...)
@@ -290,6 +316,8 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
 
+	var ie *models.TokenBucket
+
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -304,7 +332,30 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		t.AfterLoad(ctx)
-		tokens = append(tokens, t)
+
+		// TODO(reed): for now, we're rolling these up just before returning not in db yet
+		// roll up, if required
+		if ie == nil {
+			ie = t
+		} else if t.Time.Sub(ie.Time) >= interval {
+			// put last one in, then shift the window
+			tokens = append(tokens, ie)
+			ie = t
+		} else {
+			// add volume stuff
+			ie.AmountIn = ie.AmountIn.Add(t.AmountIn)
+			ie.AmountOut = ie.AmountOut.Add(t.AmountOut)
+			ie.VolumeUSD = ie.VolumeUSD.Add(t.VolumeUSD)
+
+			// dont' add these
+			ie.PriceUSD = t.PriceUSD
+			ie.Reserve = t.Reserve
+			ie.LiquidityUSD = t.LiquidityUSD
+		}
+	}
+
+	if ie != nil {
+		tokens = append(tokens, ie)
 	}
 
 	return tokens, nil

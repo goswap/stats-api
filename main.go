@@ -247,7 +247,7 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 
 func getTotals(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	// RFC3339: "2006-01-02T15:04:05Z"
+
 	// TODO(reed): 0 < x < now is a harsh default, lots of data
 	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
 	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
@@ -269,11 +269,16 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
-	// TODO query parameters for times, interval
 	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
+
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 	symbol := chi.URLParam(r, "pair")
 
 	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, interval)
@@ -290,9 +295,15 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	// TODO query parameters for times, interval
 	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
+
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 	symbol := chi.URLParam(r, "symbol")
 
 	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
