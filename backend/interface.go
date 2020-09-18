@@ -33,22 +33,8 @@ type StatsBackend interface {
 	// at the given duration (eg per minute, per day, etc).
 	GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error)
 
-	// GetLiquidityByPair returns the total liquidity by pair in the given time window
-	// at the given duration (eg per minute, per day, etc).
-	// GetLiquidityByPair(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairLiquidity, error)
-
 	// GetVolumesByToken returns the total volume by token across all its pairs
 	// in the given time window at the given duration (eg per minute, per day,
 	// etc).
 	GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error)
-
-	// GetLiquidityByToken returns the total liquidity by token across all its pairs
-	// in the given time window at the given duration (eg per minute, per day,
-	// etc).
-	// GetLiquidityByToken(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenLiquidity, error)
-
-	// TODO(reed): do we want GetPriceByToken and just return USD? we can 'magic' this on front end too and
-	// just use the right pair?
-
-	// TODO(reed): do we want GetPriceByPair? it's rolled into PairLiquidity atm
 }
