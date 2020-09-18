@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/go-chi/chi"
 	"github.com/gochain/gochain/v3/goclient"
 	"github.com/gochain/gochain/v3/rpc"
@@ -14,13 +15,18 @@ import (
 	"github.com/goswap/stats-api/collector"
 	"github.com/goswap/stats-api/models"
 	"github.com/shopspring/decimal"
+	"github.com/treeder/firetils"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
 	"github.com/treeder/gotils"
 )
 
 var (
-	db     *backend.FirestoreBackend
+	db backend.StatsBackend
+
+	// TODO should hide this behind collector interface
+	fsc *firestore.Client
+
 	rpcURL = "https://rpc.gochain.io"
 )
 
@@ -32,7 +38,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dbfs, err := backend.NewFirestore(ctx, acc.ProjectID, opts)
+	firebaseApp, err := firetils.New(ctx, acc.ProjectID, opts)
+	if err != nil {
+		log.Fatalf("couldn't create firebase app: %v\n", err)
+	}
+	fsc, err = firebaseApp.Firestore(ctx)
+	if err != nil {
+		log.Fatalf("couldn't create firebase client: %v\n", err)
+	}
+
+	dbfs, err := backend.NewFirestore(ctx, fsc)
 	if err != nil {
 		log.Fatalf("couldn't init firebase: %v\n", err)
 	}
@@ -48,26 +63,7 @@ func main() {
 	// Setup logging, optional, typically will work fine without this, but depends on GCP service you're using
 	// gcputils.InitLogging()
 
-	// load up and cache top tokens and pairs
-	// pairs, err := db.GetPairs(ctx)
-	// if err != nil {
-	// 	log.Fatalf("error on GetPairs: %v\n", err)
-	// }
-
-	// // TODO: the following will get heavy quickly as we add more pairs, need to change this
-	// // TODO: perhaps the collector can update these values on the Pair and Token objects directly so it's just done once during collection runs.
-	// // fs := dbfs.Client()
-	// timeStart := time.Now().AddDate(0, 0, -1)
-	// timeEnd := time.Now()
-	// interval := time.Duration(0)
-	// pairBuckets, err := db.GetPairBuckets(ctx, "", timeStart, timeEnd, interval)
-	// if err != nil {
-	// 	log.Fatalf("error on GetPairBuckets: %v\n", err)
-	// }
-	// tokenBuckets, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, interval)
-	// if err != nil {
-	// 	log.Fatalf("error on GetTokenBuckets: %v\n", err)
-	// }
+	// TODO: we could pre-warm some of the caches, if we really want to here before starting traffic
 
 	r := goapibase.InitRouter(ctx)
 	// Setup your routes
@@ -130,10 +126,14 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 	statsMap := make(map[string]*models.TokenBucket, len(ret))
 	// volumes := make(map[string]decimal.Decimal, len(ret))
 
-	// get past 24 hours at 1 hour intervals
-	timeEnd := time.Now()
-	timeStart := timeEnd.AddDate(0, 0, -1)
-	interval := 1 * time.Hour
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
@@ -145,9 +145,14 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 			continue
 		}
 
-		stats := &models.TokenBucket{}
+		stats := &models.TokenBucket{
+			Address: a,
+			Symbol:  r.Symbol,
+		}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
+			stats.Time = l.Time
+
 			// fmt.Printf("%v LIQUIDITY %v %v\n", r.String(), l.Reserve, l.PriceUSD)
 			stats.Reserve = l.Reserve
 			stats.PriceUSD = l.PriceUSD
@@ -193,10 +198,14 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	statsMap := make(map[string]*models.PairBucket, len(ret))
 	// volumes := make(map[string]decimal.Decimal, len(ret))
 
-	// get past 24 hours at 1 hour intervals
-	timeEnd := time.Now()
-	timeStart := timeEnd.AddDate(0, 0, -1)
-	interval := 1 * time.Hour
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
@@ -208,9 +217,13 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 			continue
 		}
 
-		stats := &models.PairBucket{}
+		stats := &models.PairBucket{
+			Address: a,
+			Pair:    r.Pair,
+		}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
+			stats.Time = l.Time
 			// fmt.Printf("%v LIQUIDITY %v %v %v %v\n", r.String(), l.Reserve0, l.Reserve1, l.Price0USD, l.Price1USD)
 			stats.Reserve0 = l.Reserve0
 			stats.Reserve1 = l.Reserve1
@@ -249,11 +262,16 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getTotals(w http.ResponseWriter, r *http.Request) error {
-	// TODO query parameters for times, interval
 	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
+
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 
 	totals, err := db.GetTotals(ctx, timeStart, timeEnd, interval)
 	if err != nil {
@@ -267,11 +285,16 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
-	// TODO query parameters for times, interval
 	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
+
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 	symbol := chi.URLParam(r, "pair")
 
 	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, interval)
@@ -288,9 +311,15 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	// TODO query parameters for times, interval
 	ctx := r.Context()
-	timeStart := time.Now().AddDate(0, 0, -1)
-	timeEnd := time.Now()
-	interval := time.Duration(0)
+
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	// TODO we should limit interval to 1h or 24h only, default 24h?
 	symbol := chi.URLParam(r, "symbol")
 
 	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
@@ -317,7 +346,7 @@ func collect(w http.ResponseWriter, r *http.Request) error {
 	}
 	rpc := goclient.NewClient(rpcClient)
 
-	err = collector.FetchData(ctx, rpc, db.Client())
+	err = collector.FetchData(ctx, rpc, fsc)
 	if err != nil {
 		return gotils.C(ctx).Errorf("error on collector.FetchData: %v", err)
 	}
