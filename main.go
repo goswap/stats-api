@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -208,14 +207,14 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		stats := &models.PairBucket{}
 		if len(liqs) > 0 {
 			l := liqs[len(liqs)-1]
-			fmt.Printf("%v LIQUIDITY %v %v %v %v\n", r.String(), l.Reserve0, l.Reserve1, l.Price0USD, l.Price1USD)
+			// fmt.Printf("%v LIQUIDITY %v %v %v %v\n", r.String(), l.Reserve0, l.Reserve1, l.Price0USD, l.Price1USD)
 			stats.Reserve0 = l.Reserve0
 			stats.Reserve1 = l.Reserve1
 			stats.Price0USD = l.Price0USD
 			stats.Price1USD = l.Price1USD
 			stats.TotalSupply = l.TotalSupply
 			stats.LiquidityUSD = l.Reserve0.Mul(l.Price0USD).Add(l.Reserve1.Mul(l.Price1USD))
-			fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
+			// fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
 			for _, l := range liqs {
 				stats.Amount0In = stats.Amount0In.Add(l.Amount0In)
 				stats.Amount1In = stats.Amount1In.Add(l.Amount1In)
