@@ -161,11 +161,12 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 			stats.Reserve = l.Reserve
 			stats.PriceUSD = l.PriceUSD
 			stats.LiquidityUSD = l.Reserve.Mul(l.PriceUSD)
-			// fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
-			for _, l := range liqs {
-				stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
-				// fmt.Printf("%v LIQUIDITY XXX %v %v\n", r.String(), l.Reserve, l.PriceUSD)
-			}
+			// since we're defaulting to 24 hours and we only want to return 24 hours, not going to loop, just going to use the most recent
+			// for _, l := range liqs {
+			// 	stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
+			// 	// fmt.Printf("%v LIQUIDITY XXX %v %v\n", r.String(), l.Reserve, l.PriceUSD)
+			// }
+			stats.VolumeUSD = l.VolumeUSD
 		}
 		statsMap[a] = stats
 	}
@@ -235,11 +236,15 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 			stats.TotalSupply = l.TotalSupply
 			stats.LiquidityUSD = l.Reserve0.Mul(l.Price0USD).Add(l.Reserve1.Mul(l.Price1USD))
 			// fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
-			for _, l := range liqs {
-				stats.Amount0In = stats.Amount0In.Add(l.Amount0In)
-				stats.Amount1In = stats.Amount1In.Add(l.Amount1In)
-				stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
-			}
+			// since we're defaulting to 24 hours and we only want to return 24 hours, not going to loop, just going to use the most recent
+			// for _, l := range liqs {
+			// 	stats.Amount0In = stats.Amount0In.Add(l.Amount0In)
+			// 	stats.Amount1In = stats.Amount1In.Add(l.Amount1In)
+			// 	stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
+			// }
+			stats.Amount0In = l.Amount0In
+			stats.Amount1In = l.Amount1In
+			stats.VolumeUSD = l.VolumeUSD
 		}
 		statsMap[a] = stats
 	}
