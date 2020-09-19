@@ -21,6 +21,10 @@ import (
 	"github.com/treeder/gotils"
 )
 
+const (
+	DefaultInterval = 24 * time.Hour
+)
+
 var (
 	db backend.StatsBackend
 
@@ -132,7 +136,7 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 	if timeEnd.IsZero() {
 		timeEnd = time.Now() // default to latest
 	}
-	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
+	interval := parseInterval(r)
 	// TODO we should limit interval to 1h or 24h only, default 24h?
 
 	for _, r := range ret {
@@ -204,8 +208,7 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	if timeEnd.IsZero() {
 		timeEnd = time.Now() // default to latest
 	}
-	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
-	// TODO we should limit interval to 1h or 24h only, default 24h?
+	interval := parseInterval(r)
 
 	for _, r := range ret {
 		// TODO: we could parallelize this but should be cached most requests sooo
@@ -270,8 +273,7 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 	if timeEnd.IsZero() {
 		timeEnd = time.Now() // default to latest
 	}
-	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
-	// TODO we should limit interval to 1h or 24h only, default 24h?
+	interval := parseInterval(r)
 
 	totals, err := db.GetTotals(ctx, timeStart, timeEnd, interval)
 	if err != nil {
@@ -283,7 +285,15 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 	})
 	return nil
 }
-
+func parseInterval(r *http.Request) time.Duration {
+	is := r.URL.Query().Get("interval")
+	if is == "" {
+		return DefaultInterval
+	}
+	interval, _ := time.ParseDuration(is)
+	// TODO we should limit interval to 1h or 24h only, default 24h?
+	return interval
+}
 func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
@@ -293,8 +303,7 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	if timeEnd.IsZero() {
 		timeEnd = time.Now() // default to latest
 	}
-	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
-	// TODO we should limit interval to 1h or 24h only, default 24h?
+	interval := parseInterval(r)
 	symbol := chi.URLParam(r, "pair")
 
 	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, interval)
@@ -318,8 +327,7 @@ func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	if timeEnd.IsZero() {
 		timeEnd = time.Now() // default to latest
 	}
-	interval, _ := time.ParseDuration(r.URL.Query().Get("interval"))
-	// TODO we should limit interval to 1h or 24h only, default 24h?
+	interval := parseInterval(r)
 	symbol := chi.URLParam(r, "symbol")
 
 	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
