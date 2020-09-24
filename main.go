@@ -78,7 +78,7 @@ func main() {
 	r.Route("/tokens", func(r chi.Router) {
 		r.Get("/", errorHandler(getTokens))
 		r.Route("/{symbol}", func(r chi.Router) {
-			// r.Use(ArticleCtx)
+			r.Get("/", errorHandler(getToken))
 			r.Get("/buckets", errorHandler(getTokenBuckets))
 		})
 	})
@@ -192,7 +192,61 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// returns a list of all tokens
+// returns a single token
+func getToken(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
+	symbol := chi.URLParam(r, "symbol")
+	ret, err := db.GetToken(ctx, symbol)
+	if err != nil {
+		return err
+	}
+
+	// TODO(reed): 0 < x < now is a harsh default, lots of data
+	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if timeEnd.IsZero() {
+		timeEnd = time.Now() // default to latest
+	}
+	interval := parseInterval(r)
+	// TODO we should limit interval to 1h or 24h only, default 24h?
+
+	// TODO: we could parallelize this but should be cached most requests sooo
+
+	liqs, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
+	if err != nil {
+		return gotils.C(ctx).Errorf("error getting liquidity for token: %v %v", symbol, err)
+	}
+
+	stats := &models.TokenBucket{
+		Address: symbol,
+		Symbol:  ret.Symbol,
+	}
+	if len(liqs) > 0 {
+		l := liqs[len(liqs)-1]
+		stats.Time = l.Time
+
+		// fmt.Printf("%v LIQUIDITY %v %v\n", r.String(), l.Reserve, l.PriceUSD)
+		stats.Reserve = l.Reserve
+		stats.PriceUSD = l.PriceUSD
+		stats.LiquidityUSD = l.Reserve.Mul(l.PriceUSD)
+		// since we're defaulting to 24 hours and we only want to return 24 hours, not going to loop, just going to use the most recent
+		// for _, l := range liqs {
+		// 	stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
+		// 	// fmt.Printf("%v LIQUIDITY XXX %v %v\n", r.String(), l.Reserve, l.PriceUSD)
+		// }
+		stats.VolumeUSD = l.VolumeUSD
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"token": ret,
+		"stats": stats,
+	})
+
+	return nil
+}
+
+// returns a list of all pairs
 func getPairs(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
