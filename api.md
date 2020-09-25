@@ -1,6 +1,5 @@
 # GOSwap Stats API
 
-TODO finish documenting descriptions
 TODO document all fields
 TODO make the actual API look like this (WARNING: it currently does not)
 
@@ -85,13 +84,11 @@ get pair returns a pair's metadata
 list stats returns a sum of stat totals across all tokens/pairs that are `time_frame`
 apart, between `time_start` and `time_end`.
 
-TODO defaults for `time_` fields
-
 ```
 /v1/stats/totals
-?time_frame=1h
-?time_start=RFC3339-date
-?time_end=RFC3339-date
+?time_frame=1h default: 1h
+?time_start=RFC3339-date default: -24h
+?time_end=RFC3339-date default: now
 ```
 
 `
@@ -109,15 +106,14 @@ TODO defaults for `time_` fields
 ### get all token stats
 
 return token stats across all tokens between `time_start` and `time_end`, the
-volume, amountIn and amountOut returned will be summed over the given time range for each token,
-priceUSD and liquidityUSD will be the latest values.
-
-TODO defaults for `time_` fields
+volume, amountIn and amountOut returned will be summed over the given time
+range for each token, priceUSD, reserve and liquidityUSD will be the latest
+values.
 
 ```
 /v1/stats/tokens
-?time_start=RFC3339-date
-?time_end=RFC3339-date
+?time_start=RFC3339-date default: -24h
+?time_end=RFC3339-date default: now
 ```
 
 ```
@@ -142,15 +138,13 @@ TODO defaults for `time_` fields
 
 ```
 /v1/stats/tokens/{address}
-?time_frame=1h
-?time_start=RFC3339-date
-?time_end=RFC3339-date
+?time_frame=1h default: 1h
+?time_start=RFC3339-date default: -24h
+?time_end=RFC3339-date default: now
 ```
 
 return token stats for a single token between `time_start` and `time_end` that
 are `time_frame` apart.
-
-TODO defaults for `time_` fields
 
 ```
 {
@@ -174,15 +168,14 @@ TODO defaults for `time_` fields
 
 ```
 /v1/stats/pairs
-?time_start=RFC3339-date
-?time_end=RFC3339-date
+?time_start=RFC3339-date default: -24h
+?time_end=RFC3339-date default: now
 ```
 
 return pair stats across all pairs between `time_start` and `time_end`, the
-volume, amountIn and amountOut returned will be summed over the given time range for each token,
-priceUSD and liquidityUSD will be the latest values.
-
-TODO defaults for `time_` fields
+volume, amountIn and amountOut returned will be summed over the given time
+range for each pair, priceUSD, reserve, totalSupply and liquidityUSD will be
+the latest values.
 
 ```
 {
@@ -211,15 +204,13 @@ TODO defaults for `time_` fields
 
 ```
 /v1/stats/pairs/{address}
-?time_frame=1h
-?time_start=RFC3339-date
-?time_end=RFC3339-date
+?time_frame=1h default: 1h
+?time_start=RFC3339-date default: -24h
+?time_end=RFC3339-date default: now
 ```
 
 return pair stats for a single token between `time_start` and `time_end` that
 are `time_frame` apart.
-
-TODO defaults for `time_` fields
 
 ```
 {
