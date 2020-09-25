@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"sort"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -13,8 +12,6 @@ import (
 	"github.com/gochain/gochain/v3/rpc"
 	"github.com/goswap/stats-api/backend"
 	"github.com/goswap/stats-api/collector"
-	"github.com/goswap/stats-api/models"
-	"github.com/shopspring/decimal"
 	"github.com/treeder/firetils"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
@@ -22,7 +19,8 @@ import (
 )
 
 const (
-	DefaultInterval = 24 * time.Hour
+	// DefaultTimeFrame is the default time frame
+	DefaultTimeFrame = 24 * time.Hour
 )
 
 var (
@@ -75,24 +73,31 @@ func main() {
 		w.Write([]byte("welcome"))
 	})
 	r.Post("/collect", errorHandler(collect))
-	r.Route("/tokens", func(r chi.Router) {
+	r.Route("/v1/tokens", func(r chi.Router) {
 		r.Get("/", errorHandler(getTokens))
 		r.Route("/{symbol}", func(r chi.Router) {
 			r.Get("/", errorHandler(getToken))
-			r.Get("/buckets", errorHandler(getTokenBuckets))
 		})
 	})
-	r.Route("/pairs", func(r chi.Router) {
+	r.Route("/v1/pairs", func(r chi.Router) {
 		r.Get("/", errorHandler(getPairs))
 		r.Route("/{pair}", func(r chi.Router) {
-			// r.Use(ArticleCtx)
-			r.Get("/buckets", errorHandler(getPairBuckets))
+			r.Get("/buckets", errorHandler(getPair))
 		})
 	})
-	r.Route("/totals", func(r chi.Router) {
-		r.Route("/", func(r chi.Router) {
-			// r.Use(ArticleCtx)
-			r.Get("/", errorHandler(getTotals)) // GET /articles/123
+	r.Route("/v1/stats", func(r chi.Router) {
+		r.Get("/", errorHandler(getTotals))
+		r.Route("/tokens", func(r chi.Router) {
+			r.Get("/", errorHandler(getTokensStats))
+			r.Route("/{symbol}", func(r chi.Router) {
+				r.Get("/", errorHandler(getTokenBuckets))
+			})
+		})
+		r.Route("/pairs", func(r chi.Router) {
+			r.Get("/", errorHandler(getPairsStats))
+			r.Route("/{pair}", func(r chi.Router) {
+				r.Get("/", errorHandler(getPairBuckets))
+			})
 		})
 	})
 	// Start server
@@ -127,57 +132,47 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	statsMap := make(map[string]*models.TokenBucket, len(ret))
-	// volumes := make(map[string]decimal.Decimal, len(ret))
-
-	// TODO(reed): 0 < x < now is a harsh default, lots of data
-	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if timeEnd.IsZero() {
-		timeEnd = time.Now() // default to latest
-	}
-	interval := parseInterval(r)
-	// TODO we should limit interval to 1h or 24h only, default 24h?
-
-	for _, r := range ret {
-		// TODO: we could parallelize this but should be cached most requests sooo
-		a := r.Address.Hex() // TODO hex?
-		liqs, err := db.GetTokenBuckets(ctx, a, timeStart, timeEnd, interval)
-		if err != nil {
-			// TODO log and move on
-			gcputils.Error().Printf("error getting liquidity for token: %v %v", a, err)
-			continue
-		}
-
-		stats := &models.TokenBucket{
-			Address: a,
-			Symbol:  r.Symbol,
-		}
-		if len(liqs) > 0 {
-			l := liqs[len(liqs)-1]
-			stats.Time = l.Time
-
-			// fmt.Printf("%v LIQUIDITY %v %v\n", r.String(), l.Reserve, l.PriceUSD)
-			stats.Reserve = l.Reserve
-			stats.PriceUSD = l.PriceUSD
-			stats.LiquidityUSD = l.Reserve.Mul(l.PriceUSD)
-			// since we're defaulting to 24 hours and we only want to return 24 hours, not going to loop, just going to use the most recent
-			// for _, l := range liqs {
-			// 	stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
-			// 	// fmt.Printf("%v LIQUIDITY XXX %v %v\n", r.String(), l.Reserve, l.PriceUSD)
-			// }
-			stats.VolumeUSD = l.VolumeUSD
-		}
-		statsMap[a] = stats
-	}
-
-	sort.Slice(ret, func(i, j int) bool {
-		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
-	})
-
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"tokens": ret,
-		"stats":  statsMap,
+	})
+	return nil
+}
+
+// parseTimes parses times from query params or inserts a default
+func parseTimes(r *http.Request) (start, end time.Time, frame time.Duration) {
+	end, _ = time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if end.IsZero() {
+		end = time.Now()
+	}
+	// TODO(reed): start time of 0 default won't scale well in a year?
+	start, _ = time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	// TODO(reed): reconsider, weird if end provided w/ invalid start, can still get bad frame
+	//if start.IsZero() || end.Before(start) {
+	//start = time.Now().Add(-24 * time.Hour)
+	//}
+
+	frame, _ = time.ParseDuration(r.URL.Query().Get("frame"))
+	if frame == 0 {
+		frame = DefaultTimeFrame
+	}
+	return start, end, frame
+}
+
+// returns all token sums
+func getTokensStats(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
+	timeStart, timeEnd, _ := parseTimes(r)
+	// set timeFrame to get sums
+	timeFrame := timeStart.Sub(timeEnd)
+
+	liqs, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, timeFrame)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"stats": liqs,
 	})
 
 	return nil
@@ -193,47 +188,41 @@ func getToken(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// TODO(reed): 0 < x < now is a harsh default, lots of data
-	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if timeEnd.IsZero() {
-		timeEnd = time.Now() // default to latest
-	}
-	interval := parseInterval(r)
-	// TODO we should limit interval to 1h or 24h only, default 24h?
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"token": ret,
+	})
+	return nil
+}
 
-	// TODO: we could parallelize this but should be cached most requests sooo
+func getTokenStats(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	timeStart, timeEnd, timeFrame := parseTimes(r)
+	address := chi.URLParam(r, "address")
 
-	liqs, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
+	stats, err := db.GetTokenBuckets(ctx, address, timeStart, timeEnd, timeFrame)
 	if err != nil {
-		return gotils.C(ctx).Errorf("error getting liquidity for token: %v %v", symbol, err)
-	}
-
-	stats := &models.TokenBucket{
-		Address: symbol,
-		Symbol:  ret.Symbol,
-	}
-	if len(liqs) > 0 {
-		l := liqs[len(liqs)-1]
-		stats.Time = l.Time
-
-		// fmt.Printf("%v LIQUIDITY %v %v\n", r.String(), l.Reserve, l.PriceUSD)
-		stats.Reserve = l.Reserve
-		stats.PriceUSD = l.PriceUSD
-		stats.LiquidityUSD = l.Reserve.Mul(l.PriceUSD)
-		// since we're defaulting to 24 hours and we only want to return 24 hours, not going to loop, just going to use the most recent
-		// for _, l := range liqs {
-		// 	stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
-		// 	// fmt.Printf("%v LIQUIDITY XXX %v %v\n", r.String(), l.Reserve, l.PriceUSD)
-		// }
-		stats.VolumeUSD = l.VolumeUSD
+		return err
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"token": ret,
 		"stats": stats,
 	})
+	return nil
+}
 
+// returns a single pair
+func getPair(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
+	pair := chi.URLParam(r, "pair")
+	ret, err := db.GetPair(ctx, pair)
+	if err != nil {
+		return err
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"pair": ret,
+	})
 	return nil
 }
 
@@ -245,87 +234,34 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	statsMap := make(map[string]*models.PairBucket, len(ret))
-	// volumes := make(map[string]decimal.Decimal, len(ret))
-
-	// TODO(reed): 0 < x < now is a harsh default, lots of data
-	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if timeEnd.IsZero() {
-		timeEnd = time.Now() // default to latest
-	}
-	interval := parseInterval(r)
-
-	for _, r := range ret {
-		// TODO: we could parallelize this but should be cached most requests sooo
-		a := r.Address.Hex() // TODO hex?
-		liqs, err := db.GetPairBuckets(ctx, a, timeStart, timeEnd, interval)
-		if err != nil {
-			// TODO log and move on
-			gcputils.Error().Printf("error getting liquidity for token: %v %v", a, err)
-			continue
-		}
-
-		stats := &models.PairBucket{
-			Address: a,
-			Pair:    r.Pair,
-		}
-		if len(liqs) > 0 {
-			l := liqs[len(liqs)-1]
-			stats.Time = l.Time
-			// fmt.Printf("%v LIQUIDITY %v %v %v %v\n", r.String(), l.Reserve0, l.Reserve1, l.Price0USD, l.Price1USD)
-			stats.Reserve0 = l.Reserve0
-			stats.Reserve1 = l.Reserve1
-			stats.Price0USD = l.Price0USD
-			stats.Price1USD = l.Price1USD
-			stats.TotalSupply = l.TotalSupply
-			stats.LiquidityUSD = l.Reserve0.Mul(l.Price0USD).Add(l.Reserve1.Mul(l.Price1USD))
-			// fmt.Printf("LIQUIDITY 2: %v\n", stats.LiquidityUSD)
-			// since we're defaulting to 24 hours and we only want to return 24 hours, not going to loop, just going to use the most recent
-			// for _, l := range liqs {
-			// 	stats.Amount0In = stats.Amount0In.Add(l.Amount0In)
-			// 	stats.Amount1In = stats.Amount1In.Add(l.Amount1In)
-			// 	stats.VolumeUSD = stats.VolumeUSD.Add(l.VolumeUSD)
-			// }
-			stats.Amount0In = l.Amount0In
-			stats.Amount1In = l.Amount1In
-			stats.VolumeUSD = l.VolumeUSD
-		}
-		statsMap[a] = stats
-	}
-
-	sort.Slice(ret, func(i, j int) bool {
-		// Using not less to make it descending order
-		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"pair": ret,
 	})
+	return nil
+}
 
-	ret2 := []*models.Pair{}
-	for _, r := range ret {
-		if statsMap[r.Address.Hex()].LiquidityUSD.Equal(decimal.Zero) {
-			continue
-		}
-		ret2 = append(ret2, r)
+func getPairsStats(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	timeStart, timeEnd, _ := parseTimes(r)
+	// set timeFrame to get sums
+	timeFrame := timeStart.Sub(timeEnd)
+
+	stats, err := db.GetPairBuckets(ctx, "", timeStart, timeEnd, timeFrame)
+	if err != nil {
+		return err
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"pairs": ret2,
-		"stats": statsMap,
+		"stats": stats,
 	})
 	return nil
 }
 
 func getTotals(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
+	timeStart, timeEnd, timeFrame := parseTimes(r)
 
-	// TODO(reed): 0 < x < now is a harsh default, lots of data
-	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if timeEnd.IsZero() {
-		timeEnd = time.Now() // default to latest
-	}
-	interval := parseInterval(r)
-
-	totals, err := db.GetTotals(ctx, timeStart, timeEnd, interval)
+	totals, err := db.GetTotals(ctx, timeStart, timeEnd, timeFrame)
 	if err != nil {
 		return err
 	}
@@ -335,28 +271,13 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 	})
 	return nil
 }
-func parseInterval(r *http.Request) time.Duration {
-	is := r.URL.Query().Get("interval")
-	if is == "" {
-		return DefaultInterval
-	}
-	interval, _ := time.ParseDuration(is)
-	// TODO we should limit interval to 1h or 24h only, default 24h?
-	return interval
-}
+
 func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-
-	// TODO(reed): 0 < x < now is a harsh default, lots of data
-	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if timeEnd.IsZero() {
-		timeEnd = time.Now() // default to latest
-	}
-	interval := parseInterval(r)
+	timeStart, timeEnd, timeFrame := parseTimes(r)
 	symbol := chi.URLParam(r, "pair")
 
-	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, interval)
+	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, timeFrame)
 	if err != nil {
 		return err
 	}
@@ -368,19 +289,11 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
-	// TODO query parameters for times, interval
 	ctx := r.Context()
-
-	// TODO(reed): 0 < x < now is a harsh default, lots of data
-	timeStart, _ := time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
-	timeEnd, _ := time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
-	if timeEnd.IsZero() {
-		timeEnd = time.Now() // default to latest
-	}
-	interval := parseInterval(r)
+	timeStart, timeEnd, timeFrame := parseTimes(r)
 	symbol := chi.URLParam(r, "symbol")
 
-	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, interval)
+	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, timeFrame)
 	if err != nil {
 		return err
 	}

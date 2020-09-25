@@ -1,6 +1,7 @@
 # GOSwap Stats API
 
 TODO document all fields
+TODO sort / pagination ?
 TODO make the actual API look like this (WARNING: it currently does not)
 
 ### list tokens
@@ -82,11 +83,12 @@ get pair returns a pair's metadata
 ### list stats totals
 
 list stats returns a sum of stat totals across all tokens/pairs that are `time_frame`
-apart, between `time_start` and `time_end`.
+apart, between `time_start` and `time_end`. These are returned in
+chronological order.
 
 ```
-/v1/stats/totals
-?time_frame=1h default: 1h
+/v1/stats
+?time_frame=1h default: 24h
 ?time_start=RFC3339-date default: -24h
 ?time_end=RFC3339-date default: now
 ```
@@ -138,7 +140,7 @@ values.
 
 ```
 /v1/stats/tokens/{address}
-?time_frame=1h default: 1h
+?time_frame=1h default: 24h
 ?time_start=RFC3339-date default: -24h
 ?time_end=RFC3339-date default: now
 ```
@@ -204,7 +206,7 @@ the latest values.
 
 ```
 /v1/stats/pairs/{address}
-?time_frame=1h default: 1h
+?time_frame=1h default: 24h
 ?time_start=RFC3339-date default: -24h
 ?time_end=RFC3339-date default: now
 ```
