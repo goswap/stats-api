@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// TODO we could add more fine grained ttl, this is a stand in.
-	cache, err := backend.NewCacheBackend(ctx, dbfs, 1*time.Minute)
+	cache, err := backend.NewCacheBackend(ctx, dbfs, 60*time.Minute)
 	if err != nil {
 		log.Fatalf("couldn't set up cache: %v\n", err)
 	}
