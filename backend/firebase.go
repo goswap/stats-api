@@ -191,8 +191,6 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 }
 
 func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
-	var pairs []*models.PairBucket
-
 	c := fs.c.Collection(CollectionPairBuckets)
 	q := c.Query
 	if pair != "" {
@@ -251,6 +249,7 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		}
 	}
 
+	pairs := make([]*models.PairBucket, 0, len(pbs))
 	for _, v := range pbs {
 		pairs = append(pairs, v...)
 	}
@@ -261,8 +260,6 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 }
 
 func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
-	var tokens []*models.TokenBucket
-
 	c := fs.c.Collection(CollectionTokenBuckets)
 	q := c.Query
 	if token != "" {
@@ -273,7 +270,8 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
 
-	var ie *models.TokenBucket
+	// in practice, the list is n=1, flexible... (TODO: weird)
+	tbs := make(map[string][]*models.TokenBucket)
 
 	for {
 		doc, err := iter.Next()
@@ -290,14 +288,17 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 		}
 		t.AfterLoad(ctx)
 
+		var ie *models.TokenBucket
+		ct := tbs[t.Address]
+		if len(ct) > 0 {
+			ie = ct[len(ct)-1]
+		}
+
 		// TODO(reed): for now, we're rolling these up just before returning not in db yet
 		// roll up, if required
-		if ie == nil {
-			ie = t
-		} else if t.Time.Sub(ie.Time) >= interval {
-			// put last one in, then shift the window
-			tokens = append(tokens, ie)
-			ie = t
+		if ie == nil || t.Time.Sub(ie.Time) >= interval {
+			// shift the window
+			tbs[t.Address] = append(ct, t)
 		} else {
 			// add volume stuff
 			ie.AmountIn = ie.AmountIn.Add(t.AmountIn)
@@ -311,8 +312,9 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 		}
 	}
 
-	if ie != nil {
-		tokens = append(tokens, ie)
+	tokens := make([]*models.TokenBucket, 0, len(tbs))
+	for _, v := range tbs {
+		tokens = append(tokens, v...)
 	}
 
 	return tokens, nil

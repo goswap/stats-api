@@ -2,7 +2,7 @@
 
 TODO document all fields
 TODO sort / pagination ?
-TODO make the actual API look like this (WARNING: it currently does not)
+TODO liquidityUSD is empty, remove or we need to calculate?
 
 ### list tokens
 
@@ -88,9 +88,9 @@ chronological order.
 
 ```
 /v1/stats
-?time_frame=1h default: 24h
-?time_start=RFC3339-date default: -24h
-?time_end=RFC3339-date default: now
+?time_frame=1h REQUIRED
+?time_start=RFC3339-date REQUIRED
+?time_end=RFC3339-date REQUIRED
 ```
 
 `
@@ -110,12 +110,13 @@ chronological order.
 return token stats across all tokens between `time_start` and `time_end`, the
 volume, amountIn and amountOut returned will be summed over the given time
 range for each token, priceUSD, reserve and liquidityUSD will be the latest
-values.
+values. Tokens with no activity in the given time window will not be returned.
+The results are returned in no particular order.
 
 ```
 /v1/stats/tokens
-?time_start=RFC3339-date default: -24h
-?time_end=RFC3339-date default: now
+?time_start=RFC3339-date REQUIRED
+?time_end=RFC3339-date REQUIRED
 ```
 
 ```
@@ -140,13 +141,13 @@ values.
 
 ```
 /v1/stats/tokens/{address}
-?time_frame=1h default: 24h
-?time_start=RFC3339-date default: -24h
-?time_end=RFC3339-date default: now
+?time_frame=1h REQUIRED
+?time_start=RFC3339-date REQUIRED
+?time_end=RFC3339-date REQUIRED
 ```
 
 return token stats for a single token between `time_start` and `time_end` that
-are `time_frame` apart.
+are `time_frame` apart. Results returned in chronological order.
 
 ```
 {
@@ -170,14 +171,16 @@ are `time_frame` apart.
 
 ```
 /v1/stats/pairs
-?time_start=RFC3339-date default: -24h
-?time_end=RFC3339-date default: now
+?time_start=RFC3339-date REQUIRED
+?time_end=RFC3339-date REQUIRED
 ```
 
 return pair stats across all pairs between `time_start` and `time_end`, the
 volume, amountIn and amountOut returned will be summed over the given time
 range for each pair, priceUSD, reserve, totalSupply and liquidityUSD will be
-the latest values.
+the latest values. Pairs with no activity in the given time window will not be
+returned.  The results are returned in no particular order.
+
 
 ```
 {
@@ -206,13 +209,13 @@ the latest values.
 
 ```
 /v1/stats/pairs/{address}
-?time_frame=1h default: 24h
-?time_start=RFC3339-date default: -24h
-?time_end=RFC3339-date default: now
+?time_frame=1h REQUIRED
+?time_start=RFC3339-date REQUIRED
+?time_end=RFC3339-date REQUIRED
 ```
 
 return pair stats for a single token between `time_start` and `time_end` that
-are `time_frame` apart.
+are `time_frame` apart. Results returned in chronological order.
 
 ```
 {
