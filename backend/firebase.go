@@ -183,7 +183,8 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 	}
 
 	// insert last entry
-	if ie != nil {
+	if (ie != nil && len(totals) == 0) ||
+		(len(totals) > 0 && ie.Time != totals[len(totals)-1].Time) {
 		totals = append(totals, ie)
 	}
 
