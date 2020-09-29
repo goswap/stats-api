@@ -164,7 +164,7 @@ func getTokensStats(w http.ResponseWriter, r *http.Request) error {
 
 	timeStart, timeEnd, _ := parseTimes(r)
 	// set timeFrame to get sums
-	timeFrame := timeStart.Sub(timeEnd)
+	timeFrame := timeEnd.Sub(timeStart)
 
 	liqs, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, timeFrame)
 	if err != nil {
@@ -244,7 +244,7 @@ func getPairsStats(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	timeStart, timeEnd, _ := parseTimes(r)
 	// set timeFrame to get sums
-	timeFrame := timeStart.Sub(timeEnd)
+	timeFrame := timeEnd.Sub(timeStart)
 
 	stats, err := db.GetPairBuckets(ctx, "", timeStart, timeEnd, timeFrame)
 	if err != nil {
@@ -267,7 +267,7 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"overTime": totals, // this has volume and liquidity
+		"stats": totals, // this has volume and liquidity
 	})
 	return nil
 }

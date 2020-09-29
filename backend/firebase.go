@@ -203,7 +203,8 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
 
-	var ie *models.PairBucket
+	// in practice, the list is n=1, flexible... (TODO: weird)
+	pbs := make(map[string][]*models.PairBucket)
 
 	for {
 		doc, err := iter.Next()
@@ -220,14 +221,18 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		}
 		p.AfterLoad(ctx)
 
+		var ie *models.PairBucket
+		cp := pbs[p.Address]
+		if len(cp) > 0 {
+			ie = cp[len(cp)-1]
+		}
+
 		// TODO(reed): for now, we're rolling these up just before returning not in db yet
 		// roll up, if required
-		if ie == nil {
-			ie = p
-		} else if p.Time.Sub(ie.Time) >= interval {
-			// put last one in, then shift the window
-			pairs = append(pairs, ie)
-			ie = p
+		// TODO(reed): clean this up, it's confusing atm
+		if ie == nil || p.Time.Sub(ie.Time) >= interval {
+			// shift the window
+			pbs[p.Address] = append(cp, p)
 		} else {
 			// add volume stuff
 			ie.Amount0In = ie.Amount0In.Add(p.Amount0In)
@@ -246,8 +251,8 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		}
 	}
 
-	if ie != nil {
-		pairs = append(pairs, ie)
+	for _, v := range pbs {
+		pairs = append(pairs, v...)
 	}
 
 	// TODO: handle pair not found or bad pair input (validating backend wrapper for testing...)
