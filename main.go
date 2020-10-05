@@ -75,27 +75,30 @@ func main() {
 	r.Post("/collect", errorHandler(collect))
 	r.Route("/v1/tokens", func(r chi.Router) {
 		r.Get("/", errorHandler(getTokens))
-		r.Route("/{symbol}", func(r chi.Router) {
+		r.Route("/{address}", func(r chi.Router) {
 			r.Get("/", errorHandler(getToken))
 		})
 	})
 	r.Route("/v1/pairs", func(r chi.Router) {
 		r.Get("/", errorHandler(getPairs))
-		r.Route("/{pair}", func(r chi.Router) {
-			r.Get("/buckets", errorHandler(getPair))
+
+		r.Route("/{address}", func(r chi.Router) {
+			r.Get("/", errorHandler(getPair))
 		})
 	})
 	r.Route("/v1/stats", func(r chi.Router) {
 		r.Get("/", errorHandler(getTotals))
+
 		r.Route("/tokens", func(r chi.Router) {
 			r.Get("/", errorHandler(getTokensStats))
-			r.Route("/{symbol}", func(r chi.Router) {
+			r.Route("/{address}", func(r chi.Router) {
 				r.Get("/", errorHandler(getTokenBuckets))
 			})
 		})
+
 		r.Route("/pairs", func(r chi.Router) {
 			r.Get("/", errorHandler(getPairsStats))
-			r.Route("/{pair}", func(r chi.Router) {
+			r.Route("/{address}", func(r chi.Router) {
 				r.Get("/", errorHandler(getPairBuckets))
 			})
 		})
@@ -139,6 +142,7 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 }
 
 // parseTimes parses times from query params or inserts a default
+// TODO(reed): make these required fields
 func parseTimes(r *http.Request) (start, end time.Time, frame time.Duration) {
 	end, _ = time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
 	if end.IsZero() {
@@ -182,7 +186,7 @@ func getTokensStats(w http.ResponseWriter, r *http.Request) error {
 func getToken(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
-	symbol := chi.URLParam(r, "symbol")
+	symbol := chi.URLParam(r, "address")
 	ret, err := db.GetToken(ctx, symbol)
 	if err != nil {
 		return err
@@ -214,7 +218,7 @@ func getTokenStats(w http.ResponseWriter, r *http.Request) error {
 func getPair(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
-	pair := chi.URLParam(r, "pair")
+	pair := chi.URLParam(r, "address")
 	ret, err := db.GetPair(ctx, pair)
 	if err != nil {
 		return err
@@ -275,7 +279,7 @@ func getTotals(w http.ResponseWriter, r *http.Request) error {
 func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	timeStart, timeEnd, timeFrame := parseTimes(r)
-	symbol := chi.URLParam(r, "pair")
+	symbol := chi.URLParam(r, "address")
 
 	pairs, err := db.GetPairBuckets(ctx, symbol, timeStart, timeEnd, timeFrame)
 	if err != nil {
@@ -291,7 +295,7 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	timeStart, timeEnd, timeFrame := parseTimes(r)
-	symbol := chi.URLParam(r, "symbol")
+	symbol := chi.URLParam(r, "address")
 
 	tokens, err := db.GetTokenBuckets(ctx, symbol, timeStart, timeEnd, timeFrame)
 	if err != nil {

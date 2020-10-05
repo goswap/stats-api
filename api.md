@@ -2,7 +2,6 @@
 
 TODO document all fields
 TODO sort / pagination ?
-TODO liquidityUSD is empty, remove or we need to calculate?
 
 ### list tokens
 

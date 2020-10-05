@@ -281,6 +281,7 @@ func (pb *PairBucket) AfterLoad(ctx context.Context) {
 	pb.Reserve1, _ = decimal.NewFromString(pb.Reserve1S)
 	pb.TotalSupply, _ = decimal.NewFromString(pb.TotalSupplyS)
 
+	pb.LiquidityUSD = pb.Reserve0.Mul(pb.Price0USD).Add(pb.Reserve1.Mul(pb.Price1USD))
 }
 
 func (s *PairBucket) ValUSD() decimal.Decimal {
@@ -335,6 +336,8 @@ func (pb *TokenBucket) AfterLoad(ctx context.Context) {
 
 	pb.PriceUSD, _ = decimal.NewFromString(pb.PriceUSDS)
 	pb.VolumeUSD, _ = decimal.NewFromString(pb.VolumeUSDS)
+
+	pb.LiquidityUSD = pb.Reserve.Mul(pb.PriceUSD)
 }
 
 func (s *TokenBucket) TokenLiquidity() decimal.Decimal {
