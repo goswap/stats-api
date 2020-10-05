@@ -44,6 +44,8 @@ func NewMock(args ...interface{}) StatsBackend {
 				return arg[i].Time.Before(arg[j].Time)
 			})
 			m.totalBuckets = arg
+		default:
+			panic("unsupported type for mock db, double check your code?")
 		}
 	}
 	return m
