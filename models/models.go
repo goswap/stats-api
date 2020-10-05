@@ -21,14 +21,14 @@ type Pair struct {
 
 	Pair string `firestore:"pair" json:"pair"` // stringified version, for easy reference
 
-	PairContract *contracts.Pair `firestore:"-" json:"-"`      // this is the object to interact with the contract
-	Token0       *Token          `firestore:"-" json:"token0"` // address of token
-	Token1       *Token          `firestore:"-" json:"token1"` // address of token
+	PairContract *contracts.Pair `firestore:"-" json:"-"` // this is the object to interact with the contract
+	Token0       *Token          `firestore:"-" json:"-"`
+	Token1       *Token          `firestore:"-" json:"-"`
 
 	// for database
 	AddressHex    string `firestore:"address" json:"address"`
-	Token0Address string `firestore:"token0address" json:"-"`
-	Token1Address string `firestore:"token1address" json:"-"`
+	Token0Address string `firestore:"token0address" json:"token0"`
+	Token1Address string `firestore:"token1address" json:"token1"`
 }
 
 func (pb *Pair) PreSave() {
