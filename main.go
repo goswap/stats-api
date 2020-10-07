@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -170,13 +171,18 @@ func getTokensStats(w http.ResponseWriter, r *http.Request) error {
 	// set timeFrame to get sums
 	timeFrame := timeEnd.Sub(timeStart)
 
-	liqs, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, timeFrame)
+	stats, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, timeFrame)
 	if err != nil {
 		return err
 	}
 
+	// TODO(reed): query parameter for volume/liquidity sorting
+	sort.Slice(stats, func(i, j int) bool {
+		return !stats[i].LiquidityUSD.LessThan(stats[j].LiquidityUSD)
+	})
+
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"stats": liqs,
+		"stats": stats,
 	})
 
 	return nil
@@ -254,6 +260,11 @@ func getPairsStats(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO(reed): query parameter for volume/liquidity sorting
+	sort.Slice(stats, func(i, j int) bool {
+		return !stats[i].LiquidityUSD.LessThan(stats[j].LiquidityUSD)
+	})
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"stats": stats,
