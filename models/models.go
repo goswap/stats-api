@@ -62,6 +62,9 @@ type PriceNotFound struct {
 }
 
 func (nf *PriceNotFound) Error() string {
+	if nf.s != "" {
+		return nf.s
+	}
 	return "price not found!"
 }
 
@@ -79,23 +82,24 @@ func (td *Pair) PriceInUSD(ctx context.Context) (decimal.Decimal, error) {
 	if err != nil {
 		return decimal.Zero, gotils.C(ctx).Errorf("error getting reserves: %v", err)
 	}
-	// var usdc, other *Token
+	var other *Token
 	var usdcReserve, otherReserve decimal.Decimal
 	if td.Token0.Symbol == "USDC" {
 		// usdc = td.Token0
-		// other = td.Token1
+		other = td.Token1
 		usdcReserve = utils.IntToDec(reserves.Reserve0, td.Token0.Decimals)
 		otherReserve = utils.IntToDec(reserves.Reserve1, td.Token1.Decimals)
 	} else if td.Token1.Symbol == "USDC" {
 		// usdc = td.Token1
-		// other = td.Token0
+		other = td.Token0
 		usdcReserve = utils.IntToDec(reserves.Reserve1, td.Token1.Decimals)
 		otherReserve = utils.IntToDec(reserves.Reserve0, td.Token0.Decimals)
 	} else {
 		return decimal.Zero, errors.New("NO USDC IN PAIR")
 	}
 	if usdcReserve.LessThan(decimal.NewFromInt(10)) {
-		return decimal.Zero, &PriceNotFound{s: "Liquidity too low in pricing pair"}
+		gotils.C(ctx).Printf("%v Liquidity too low in pricing pair, returning zero", other.Symbol)
+		return decimal.Zero, nil
 	}
 	return usdcReserve.Div(otherReserve), nil
 }
