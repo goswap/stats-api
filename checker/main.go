@@ -18,9 +18,9 @@ func main() {
 	start := time.Now().UTC().Add(-interval).Format(time.RFC3339)
 	_, _, _ = start, end, interval
 	q := req.URL.Query()
-	q.Set("start_time", start)
-	q.Set("end_time", end)
-	q.Set("interval", interval.String())
+	q.Set("time_start", start)
+	q.Set("time_end", end)
+	q.Set("time_frame", interval.String())
 	req.URL.RawQuery = q.Encode()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil || resp.StatusCode != 200 {
@@ -48,9 +48,9 @@ func main() {
 
 	req, err = http.NewRequest("GET", "http://localhost:8080/v1/stats", nil)
 	q = req.URL.Query()
-	q.Set("start_time", start)
-	q.Set("end_time", end)
-	q.Set("interval", interval.String())
+	q.Set("time_start", start)
+	q.Set("time_end", end)
+	q.Set("time_frame", interval.String())
 	req.URL.RawQuery = q.Encode()
 	resp, err = http.DefaultClient.Do(req)
 	if err != nil || resp.StatusCode != 200 {

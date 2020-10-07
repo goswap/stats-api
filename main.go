@@ -144,18 +144,18 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 // parseTimes parses times from query params or inserts a default
 // TODO(reed): make these required fields
 func parseTimes(r *http.Request) (start, end time.Time, frame time.Duration) {
-	end, _ = time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	end, _ = time.Parse(time.RFC3339, r.URL.Query().Get("time_end"))
 	if end.IsZero() {
 		end = time.Now()
 	}
 	// TODO(reed): start time of 0 default won't scale well in a year?
-	start, _ = time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	start, _ = time.Parse(time.RFC3339, r.URL.Query().Get("time_start"))
 	// TODO(reed): reconsider, weird if end provided w/ invalid start, can still get bad frame
 	//if start.IsZero() || end.Before(start) {
 	//start = time.Now().Add(-24 * time.Hour)
 	//}
 
-	frame, _ = time.ParseDuration(r.URL.Query().Get("frame"))
+	frame, _ = time.ParseDuration(r.URL.Query().Get("time_frame"))
 	if frame == 0 {
 		frame = DefaultTimeFrame
 	}
