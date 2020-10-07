@@ -107,20 +107,13 @@ func PriceInUSD(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	}
 	p := USDCPairs[symbol]
 	if p == nil {
-		return decimal.Zero, &PriceNotFound{}
+		return decimal.Zero, &models.PriceNotFound{}
 	}
 	p2, err := p.PriceInUSD(ctx)
 	// if err == nil {
 	// 	priceMap[symbol] = p2
 	// }
 	return p2, err
-}
-
-type PriceNotFound struct {
-}
-
-func (nf *PriceNotFound) Error() string {
-	return "price not found!"
 }
 
 func GetPairDetails(ctx context.Context, rpc *goclient.Client, contractAddress common.Address) (*models.Pair, error) {
@@ -525,10 +518,10 @@ func fetchLiquidity(ctx context.Context, rpc *goclient.Client, fs *firestore.Cli
 	t0 := pair.Token0
 	price0, err := PriceInUSD(ctx, t0.Symbol)
 	if err != nil {
-		var e *PriceNotFound
+		var e *models.PriceNotFound
 		if errors.As(err, &e) {
 			// err is a *QueryError, and e is set to the error's value
-			fmt.Printf("%v price not found!\n", t0.Symbol)
+			fmt.Printf("%v price error: %v\n", t0.Symbol, e)
 		} else {
 			return nil, gotils.C(ctx).Errorf("error getting price0 for %v: %v", t0.Symbol, err)
 		}
@@ -536,10 +529,10 @@ func fetchLiquidity(ctx context.Context, rpc *goclient.Client, fs *firestore.Cli
 	t1 := pair.Token1
 	price1, err := PriceInUSD(ctx, t1.Symbol)
 	if err != nil {
-		var e *PriceNotFound
+		var e *models.PriceNotFound
 		if errors.As(err, &e) {
 			// err is a *QueryError, and e is set to the error's value
-			fmt.Printf("%v price not found!\n", t1.Symbol)
+			fmt.Printf("%v price error: %v\n", t0.Symbol, e)
 		} else {
 			return nil, gotils.C(ctx).Errorf("error getting price1 for %v: %v", t1.Symbol, err)
 		}

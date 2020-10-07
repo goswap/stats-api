@@ -57,7 +57,15 @@ func (td *Pair) GetReserves(ctx context.Context) (decimal.Decimal, decimal.Decim
 	return utils.IntToDec(reserves.Reserve0, td.Token0.Decimals), utils.IntToDec(reserves.Reserve1, td.Token1.Decimals), nil
 }
 
-// PriceInUSD only calls this on a USDC pair
+type PriceNotFound struct {
+	s string
+}
+
+func (nf *PriceNotFound) Error() string {
+	return "price not found!"
+}
+
+// PriceInUSD only call this on a USDC pair
 func (td *Pair) PriceInUSD(ctx context.Context) (decimal.Decimal, error) {
 	// calc is getReserves()
 	// USDC reserve, shifted token.decimals over (6)
@@ -85,6 +93,9 @@ func (td *Pair) PriceInUSD(ctx context.Context) (decimal.Decimal, error) {
 		otherReserve = utils.IntToDec(reserves.Reserve0, td.Token0.Decimals)
 	} else {
 		return decimal.Zero, errors.New("NO USDC IN PAIR")
+	}
+	if usdcReserve.LessThan(decimal.NewFromInt(10)) {
+		return decimal.Zero, &PriceNotFound{s: "Liquidity too low in pricing pair"}
 	}
 	return usdcReserve.Div(otherReserve), nil
 }
