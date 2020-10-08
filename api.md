@@ -110,12 +110,13 @@ return token stats across all tokens between `time_start` and `time_end`, the
 volume, amountIn and amountOut returned will be summed over the given time
 range for each token, priceUSD, reserve and liquidityUSD will be the latest
 values. Tokens with no activity in the given time window will not be returned.
-The results are returned in no particular order.
+The results are returned by default sorted by liquidityUSD in descending order.
 
 ```
 /v1/stats/tokens
 ?time_start=RFC3339-date REQUIRED
 ?time_end=RFC3339-date REQUIRED
+?sort=[+|-]field -liquidityUSD
 ```
 
 ```
@@ -172,13 +173,15 @@ are `time_frame` apart. Results returned in chronological order.
 /v1/stats/pairs
 ?time_start=RFC3339-date REQUIRED
 ?time_end=RFC3339-date REQUIRED
+?sort=[+|-]field -liquidityUSD
 ```
 
 return pair stats across all pairs between `time_start` and `time_end`, the
 volume, amountIn and amountOut returned will be summed over the given time
 range for each pair, priceUSD, reserve, totalSupply and liquidityUSD will be
 the latest values. Pairs with no activity in the given time window will not be
-returned.  The results are returned in no particular order.
+returned. The results are returned by default sorted by liquidityUSD in
+descending order.
 
 
 ```
