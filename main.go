@@ -175,17 +175,8 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 		return !(statsMap[ret[i].AddressHex].LiquidityUSD.LessThan(statsMap[ret[j].AddressHex].LiquidityUSD))
 	})
 
-	// remove 0 liquidity
-	ret2 := []*models.Token{}
-	for _, r := range ret {
-		if statsMap[r.Address.Hex()].LiquidityUSD.Equal(decimal.Zero) {
-			continue
-		}
-		ret2 = append(ret2, r)
-	}
-
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"tokens": ret2,
+		"tokens": ret,
 		"stats":  statsMap,
 	})
 
