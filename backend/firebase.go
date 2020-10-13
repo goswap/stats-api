@@ -148,9 +148,6 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
 
-	// interval edge
-	var ie *models.TotalBucket
-
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -165,14 +162,20 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		t.AfterLoad(ctx)
+		totals = append(totals, t)
+	}
 
-		// TODO(reed): for now, we're rolling these up just before returning not in db yet
-		// roll up, if required
+	// TODO this should be removed for pulling from aggregated data at given interva
+	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
+	var ie *models.TotalBucket
+	var ret []*models.TotalBucket
+	for i := len(totals) - 1; i >= 0; i-- {
+		t := totals[i]
 		if ie == nil {
 			ie = t
-		} else if t.Time.Sub(ie.Time) >= interval {
-			// put last one in, then shift the window
-			totals = append(totals, ie)
+		} else if ie.Time.Sub(t.Time) >= interval {
+			// insert, then shift the window
+			ret = append([]*models.TotalBucket{ie}, ret...)
 			ie = t
 		} else {
 			// add volume
@@ -182,12 +185,11 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 		}
 	}
 
-	// insert last entry
 	if ie != nil {
-		totals = append(totals, ie)
+		ret = append([]*models.TotalBucket{ie}, ret...)
 	}
 
-	return totals, nil
+	return ret, nil
 }
 
 func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
@@ -218,43 +220,46 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		p.AfterLoad(ctx)
+		pbs[p.Address] = append(pbs[p.Address], p)
+	}
 
+	// nit: could size this
+	var pairs []*models.PairBucket
+
+	// TODO this should be removed for pulling from aggregated data at given interva
+	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
+	for _, pair := range pbs {
 		var ie *models.PairBucket
-		cp := pbs[p.Address]
-		if len(cp) > 0 {
-			ie = cp[len(cp)-1]
+		for i := len(pair) - 1; i >= 0; i-- {
+			p := pair[i]
+			if ie == nil {
+				ie = p
+			} else if ie.Time.Sub(p.Time) >= interval {
+				// insert, then shift the window
+				pairs = append([]*models.PairBucket{ie}, pairs...)
+				ie = p
+			} else {
+				// add volume stuff
+				ie.Amount0In = ie.Amount0In.Add(p.Amount0In)
+				ie.Amount1In = ie.Amount1In.Add(p.Amount1In)
+				ie.Amount0Out = ie.Amount0Out.Add(p.Amount0Out)
+				ie.Amount1Out = ie.Amount1Out.Add(p.Amount1Out)
+				ie.VolumeUSD = ie.VolumeUSD.Add(p.VolumeUSD)
+
+				// liquidity/price is just the last data point in any hour (don't add)
+				ie.Price0USD = p.Price0USD
+				ie.Price1USD = p.Price1USD
+				ie.TotalSupply = p.TotalSupply
+				ie.Reserve0 = p.Reserve0
+				ie.Reserve1 = p.Reserve1
+				ie.LiquidityUSD = p.LiquidityUSD
+			}
 		}
 
-		// TODO(reed): for now, we're rolling these up just before returning not in db yet
-		// roll up, if required
-		// TODO(reed): clean this up, it's confusing atm
-		if ie == nil || p.Time.Sub(ie.Time) >= interval {
-			// shift the window
-			pbs[p.Address] = append(cp, p)
-		} else {
-			// add volume stuff
-			ie.Amount0In = ie.Amount0In.Add(p.Amount0In)
-			ie.Amount1In = ie.Amount1In.Add(p.Amount1In)
-			ie.Amount0Out = ie.Amount0Out.Add(p.Amount0Out)
-			ie.Amount1Out = ie.Amount1Out.Add(p.Amount1Out)
-			ie.VolumeUSD = ie.VolumeUSD.Add(p.VolumeUSD)
-
-			// liquidity/price is just the last data point in any hour (don't add)
-			ie.Price0USD = p.Price0USD
-			ie.Price1USD = p.Price1USD
-			ie.TotalSupply = p.TotalSupply
-			ie.Reserve0 = p.Reserve0
-			ie.Reserve1 = p.Reserve1
-			ie.LiquidityUSD = p.LiquidityUSD
+		if ie != nil {
+			pairs = append([]*models.PairBucket{ie}, pairs...)
 		}
 	}
-
-	pairs := make([]*models.PairBucket, 0, len(pbs))
-	for _, v := range pbs {
-		pairs = append(pairs, v...)
-	}
-
-	// TODO: handle pair not found or bad pair input (validating backend wrapper for testing...)
 
 	return pairs, nil
 }
@@ -288,33 +293,40 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 		}
 		t.AfterLoad(ctx)
 
-		var ie *models.TokenBucket
-		ct := tbs[t.Address]
-		if len(ct) > 0 {
-			ie = ct[len(ct)-1]
-		}
-
-		// TODO(reed): for now, we're rolling these up just before returning not in db yet
-		// roll up, if required
-		if ie == nil || t.Time.Sub(ie.Time) >= interval {
-			// shift the window
-			tbs[t.Address] = append(ct, t)
-		} else {
-			// add volume stuff
-			ie.AmountIn = ie.AmountIn.Add(t.AmountIn)
-			ie.AmountOut = ie.AmountOut.Add(t.AmountOut)
-			ie.VolumeUSD = ie.VolumeUSD.Add(t.VolumeUSD)
-
-			// dont' add these
-			ie.PriceUSD = t.PriceUSD
-			ie.Reserve = t.Reserve
-			ie.LiquidityUSD = t.LiquidityUSD
-		}
+		tbs[t.Address] = append(tbs[t.Address], t)
 	}
 
-	tokens := make([]*models.TokenBucket, 0, len(tbs))
-	for _, v := range tbs {
-		tokens = append(tokens, v...)
+	// nit: could size this
+	var tokens []*models.TokenBucket
+
+	// TODO this should be removed for pulling from aggregated data at given interva
+	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
+	for _, tok := range tbs {
+		var ie *models.TokenBucket
+		for i := len(tok) - 1; i >= 0; i-- {
+			t := tok[i]
+			if ie == nil {
+				ie = t
+			} else if ie.Time.Sub(t.Time) >= interval {
+				// insert, then shift the window
+				tokens = append([]*models.TokenBucket{ie}, tokens...)
+				ie = t
+			} else {
+				// add volume stuff
+				ie.AmountIn = ie.AmountIn.Add(t.AmountIn)
+				ie.AmountOut = ie.AmountOut.Add(t.AmountOut)
+				ie.VolumeUSD = ie.VolumeUSD.Add(t.VolumeUSD)
+
+				// dont' add these
+				ie.PriceUSD = t.PriceUSD
+				ie.Reserve = t.Reserve
+				ie.LiquidityUSD = t.LiquidityUSD
+			}
+		}
+
+		if ie != nil {
+			tokens = append([]*models.TokenBucket{ie}, tokens...)
+		}
 	}
 
 	return tokens, nil
