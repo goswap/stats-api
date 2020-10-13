@@ -240,7 +240,7 @@ func getTokensStats(w http.ResponseWriter, r *http.Request) error {
 	// and do paging / sorting of the cached data, that makes more sense? needs a
 	// good think since firebase doesn't support doing sums and then paging over
 	// it (we have to do them)
-	sortTokenBuckets(stats, sortKey, !sortDesc)
+	sortTokenBuckets(stats, sortKey, sortDesc)
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
 		"stats": stats,
