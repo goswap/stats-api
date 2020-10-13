@@ -122,6 +122,7 @@ func errorHandler(h myHandlerFunc) http.HandlerFunc {
 		if err != nil {
 			switch e := err.(type) {
 			case *gotils.HttpError:
+				// TODO we prob don't want stack trace for these (loud, and these are our errors)
 				gcputils.Error().Printf("%v", err)
 				gotils.WriteError(w, e.Code(), e)
 			default:
