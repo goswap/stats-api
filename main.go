@@ -440,7 +440,7 @@ func getPairBuckets(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"buckets": pairs,
+		"stats": pairs,
 	})
 	return nil
 }
@@ -459,7 +459,7 @@ func getTokenBuckets(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"buckets": tokens,
+		"stats": tokens,
 	})
 	return nil
 }
