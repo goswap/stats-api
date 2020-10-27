@@ -23,7 +23,9 @@ import (
 )
 
 const (
-	factoryAddress     = "0xe93c2cD333902d8dd65bF9420B68fC7B1be94bB3"
+	FactoryAddress = "0xe93c2cD333902d8dd65bF9420B68fC7B1be94bB3"
+	RouterAddress  = "0x3881e447F439891dC106Da7bca0007B319eeB74D"
+
 	maxBlockPerRequest = int64(10000)
 )
 
@@ -36,7 +38,7 @@ var (
 // GetPairsFromChain returns all the pairs that have been registered in GoSwap via the Factory contract
 // fromIndex will get all the pairs from the current index. Pass in 0 for all.
 func GetPairsFromChain(ctx context.Context, rpc *goclient.Client, fromIndex int) ([]*models.Pair, error) {
-	addr := common.HexToAddress(factoryAddress)
+	addr := common.HexToAddress(FactoryAddress)
 	mainContract, err := contracts.NewUniswapFactory(addr, rpc)
 	if err != nil {
 		return nil, gotils.C(ctx).Errorf("error on NewUniswapFactory: %v", err)
