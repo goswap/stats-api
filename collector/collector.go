@@ -260,8 +260,26 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 	pairs = append(pairs, newPairs...)
 
 	pairMap := map[string]*models.Pair{}
+	tokenMap := map[string]*models.Token{} // cache to add to pairs
 	// set USDCPairs for prices
 	for _, pair := range pairs {
+		// fill in tokens
+		if tokenMap[pair.Token0Address] != nil {
+			pair.Token0 = tokenMap[pair.Token0Address]
+		} else {
+			pair.Token0, err = db.GetToken(ctx, pair.Token0Address)
+			if err != nil {
+				return gotils.C(ctx).Errorf("%v", err)
+			}
+		}
+		if tokenMap[pair.Token1Address] != nil {
+			pair.Token1 = tokenMap[pair.Token1Address]
+		} else {
+			pair.Token1, err = db.GetToken(ctx, pair.Token1Address)
+			if err != nil {
+				return gotils.C(ctx).Errorf("%v", err)
+			}
+		}
 		pc, err := contracts.NewPair(pair.Address, rpc)
 		if err != nil {
 			return gotils.C(ctx).Errorf("error on contracts.NewPair: %v", err)
@@ -287,7 +305,6 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 	}
 
 	mostRecentBlockProcessed := startBlock
-	// tokenMap := map[string]*Token{}
 
 	totalBuckets := map[int64]*models.TotalBucket{}
 	pairBucketsMap := map[common.Address]map[int64]*models.PairBucket{}
