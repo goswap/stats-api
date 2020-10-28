@@ -271,6 +271,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			if err != nil {
 				return gotils.C(ctx).Errorf("%v", err)
 			}
+			tokenMap[pair.Token0Address] = pair.Token0
 		}
 		if tokenMap[pair.Token1Address] != nil {
 			pair.Token1 = tokenMap[pair.Token1Address]
@@ -279,6 +280,7 @@ func FetchData(ctx context.Context, rpc *goclient.Client, fs *firestore.Client) 
 			if err != nil {
 				return gotils.C(ctx).Errorf("%v", err)
 			}
+			tokenMap[pair.Token1Address] = pair.Token1
 		}
 		pc, err := contracts.NewPair(pair.Address, rpc)
 		if err != nil {
