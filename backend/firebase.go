@@ -35,10 +35,11 @@ func NewFirestore(ctx context.Context, c *firestore.Client) (*FirestoreBackend, 
 
 // GetPairs returns all available pairs
 func (fs *FirestoreBackend) GetPairs(ctx context.Context) ([]*models.Pair, error) {
-	var pairs []*models.Pair
+	pairs := make([]*models.Pair, 0)
 	iter := fs.c.Collection(CollectionPairs).
 		OrderBy("index", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	for {
 		doc, err := iter.Next()
@@ -64,8 +65,8 @@ func (fs *FirestoreBackend) GetPairs(ctx context.Context) ([]*models.Pair, error
 func (fs *FirestoreBackend) GetPair(ctx context.Context, address string) (*models.Pair, error) {
 	// could/should just get using doc key
 	iter := fs.c.Collection(CollectionPairs).Where("address", "==", address).
-		// OrderBy("time", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	for {
 		doc, err := iter.Next()
@@ -88,10 +89,10 @@ func (fs *FirestoreBackend) GetPair(ctx context.Context, address string) (*model
 
 // GetTokens returns all the available tokens
 func (fs *FirestoreBackend) GetTokens(ctx context.Context) ([]*models.Token, error) {
-	var tokens []*models.Token
+	tokens := make([]*models.Token, 0)
 	iter := fs.c.Collection(CollectionTokens).
-		// OrderBy("time", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	for {
 		doc, err := iter.Next()
@@ -117,6 +118,7 @@ func (fs *FirestoreBackend) GetToken(ctx context.Context, address string) (*mode
 	iter := fs.c.Collection(CollectionTokens).Where("address", "==", address).
 		// OrderBy("time", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	for {
 		doc, err := iter.Next()
@@ -147,6 +149,7 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	for {
 		doc, err := iter.Next()
@@ -165,10 +168,10 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 		totals = append(totals, t)
 	}
 
-	// TODO this should be removed for pulling from aggregated data at given interva
+	// TODO this should be removed for pulling from aggregated data at given intervals
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
 	var ie *models.TotalBucket
-	var ret []*models.TotalBucket
+	ret := make([]*models.TotalBucket, 0) // hard to size correctly, default []
 	for i := len(totals) - 1; i >= 0; i-- {
 		t := totals[i]
 		if ie == nil {
@@ -202,11 +205,13 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	// in practice, the list is n=1, flexible... (TODO: weird)
 	pbs := make(map[string][]*models.PairBucket)
 
-	for {
+	var n int
+	for ; ; n++ {
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
@@ -223,8 +228,8 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 		pbs[p.Address] = append(pbs[p.Address], p)
 	}
 
-	// nit: could size this
-	var pairs []*models.PairBucket
+	// we want to return empty list and not null + size here
+	pairs := make([]*models.PairBucket, 0, n)
 
 	// TODO this should be removed for pulling from aggregated data at given interva
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
@@ -274,11 +279,13 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 		Where("time", "<", to).
 		OrderBy("time", firestore.Asc).
 		Documents(ctx)
+	defer iter.Stop()
 
 	// in practice, the list is n=1, flexible... (TODO: weird)
 	tbs := make(map[string][]*models.TokenBucket)
 
-	for {
+	var n int
+	for ; ; n++ {
 		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
@@ -292,12 +299,11 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 			return nil, gotils.C(ctx).Errorf("%v", err)
 		}
 		t.AfterLoad(ctx)
-
 		tbs[t.Address] = append(tbs[t.Address], t)
 	}
 
-	// nit: could size this
-	var tokens []*models.TokenBucket
+	// want to default to empty list, but also size
+	tokens := make([]*models.TokenBucket, 0, n)
 
 	// TODO this should be removed for pulling from aggregated data at given interva
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
