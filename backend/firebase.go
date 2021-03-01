@@ -144,11 +144,15 @@ func (fs *FirestoreBackend) GetToken(ctx context.Context, address string) (*mode
 func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, interval time.Duration) ([]*models.TotalBucket, error) {
 	var totals []*models.TotalBucket
 
-	iter := fs.c.Collection(CollectionTotals).
-		Where("time", ">", from).
-		Where("time", "<", to).
-		OrderBy("time", firestore.Asc).
-		Documents(ctx)
+	c := fs.c.Collection(CollectionTotals)
+	q := c.Query
+	if !to.IsZero() {
+		q = q.Where("time", "<", to)
+	}
+	if !from.IsZero() {
+		q = q.Where("time", ">", from)
+	}
+	iter := q.OrderBy("time", firestore.Asc).Documents(ctx)
 	defer iter.Stop()
 
 	for {
@@ -171,24 +175,35 @@ func (fs *FirestoreBackend) GetTotals(ctx context.Context, from, to time.Time, i
 	// TODO this should be removed for pulling from aggregated data at given intervals
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
 	var ie *models.TotalBucket
+	var originalEnd time.Time
 	ret := make([]*models.TotalBucket, 0) // hard to size correctly, default []
 	for i := len(totals) - 1; i >= 0; i-- {
 		t := totals[i]
 		if ie == nil {
 			ie = t
+			if !to.IsZero() {
+				ie.Time = to // overwrite this to stay in bounds of range
+				originalEnd = t.Time
+			}
 		} else if ie.Time.Sub(t.Time) >= interval {
 			// insert, then shift the window
+			if ie.Time == to {
+				ie.Time = originalEnd
+			}
 			ret = append([]*models.TotalBucket{ie}, ret...)
 			ie = t
 		} else {
 			// add volume
 			ie.VolumeUSD = ie.VolumeUSD.Add(t.VolumeUSD)
 			// liquidity is just the last data point in any hour (don't add)
-			ie.LiquidityUSD = t.LiquidityUSD
+			// ie.LiquidityUSD = t.LiquidityUSD
 		}
 	}
 
 	if ie != nil {
+		if ie.Time == to {
+			ie.Time = originalEnd
+		}
 		ret = append([]*models.TotalBucket{ie}, ret...)
 	}
 
@@ -201,10 +216,13 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 	if pair != "" {
 		q = q.Where("address", "==", pair)
 	}
-	iter := q.Where("time", ">", from).
-		Where("time", "<", to).
-		OrderBy("time", firestore.Asc).
-		Documents(ctx)
+	if !to.IsZero() {
+		q = q.Where("time", "<", to)
+	}
+	if !from.IsZero() {
+		q = q.Where("time", ">", from)
+	}
+	iter := q.OrderBy("time", firestore.Asc).Documents(ctx)
 	defer iter.Stop()
 
 	// in practice, the list is n=1, flexible... (TODO: weird)
@@ -235,12 +253,20 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
 	for _, pair := range pbs {
 		var ie *models.PairBucket
+		var originalEnd time.Time
 		for i := len(pair) - 1; i >= 0; i-- {
 			p := pair[i]
 			if ie == nil {
 				ie = p
+				if !to.IsZero() {
+					ie.Time = to // overwrite this to stay in bounds of range
+					originalEnd = p.Time
+				}
 			} else if ie.Time.Sub(p.Time) >= interval {
 				// insert, then shift the window
+				if ie.Time == to {
+					ie.Time = originalEnd
+				}
 				pairs = append([]*models.PairBucket{ie}, pairs...)
 				ie = p
 			} else {
@@ -252,16 +278,19 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 				ie.VolumeUSD = ie.VolumeUSD.Add(p.VolumeUSD)
 
 				// liquidity/price is just the last data point in any hour (don't add)
-				ie.Price0USD = p.Price0USD
-				ie.Price1USD = p.Price1USD
-				ie.TotalSupply = p.TotalSupply
-				ie.Reserve0 = p.Reserve0
-				ie.Reserve1 = p.Reserve1
-				ie.LiquidityUSD = p.LiquidityUSD
+				//ie.Price0USD = p.Price0USD
+				//ie.Price1USD = p.Price1USD
+				//ie.TotalSupply = p.TotalSupply
+				//ie.Reserve0 = p.Reserve0
+				//ie.Reserve1 = p.Reserve1
+				//ie.LiquidityUSD = p.LiquidityUSD
 			}
 		}
 
 		if ie != nil {
+			if ie.Time == to {
+				ie.Time = originalEnd
+			}
 			pairs = append([]*models.PairBucket{ie}, pairs...)
 		}
 	}
@@ -275,10 +304,13 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 	if token != "" {
 		q = q.Where("address", "==", token)
 	}
-	iter := q.Where("time", ">", from).
-		Where("time", "<", to).
-		OrderBy("time", firestore.Asc).
-		Documents(ctx)
+	if !to.IsZero() {
+		q = q.Where("time", "<", to)
+	}
+	if !from.IsZero() {
+		q = q.Where("time", ">", from)
+	}
+	iter := q.OrderBy("time", firestore.Asc).Documents(ctx)
 	defer iter.Stop()
 
 	// in practice, the list is n=1, flexible... (TODO: weird)
@@ -309,12 +341,20 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
 	for _, tok := range tbs {
 		var ie *models.TokenBucket
+		var originalEnd time.Time
 		for i := len(tok) - 1; i >= 0; i-- {
 			t := tok[i]
 			if ie == nil {
 				ie = t
+				if !to.IsZero() {
+					ie.Time = to // overwrite this to stay in bounds of range
+					originalEnd = t.Time
+				}
 			} else if ie.Time.Sub(t.Time) >= interval {
 				// insert, then shift the window
+				if ie.Time == to {
+					ie.Time = originalEnd
+				}
 				tokens = append([]*models.TokenBucket{ie}, tokens...)
 				ie = t
 			} else {
@@ -324,13 +364,16 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 				ie.VolumeUSD = ie.VolumeUSD.Add(t.VolumeUSD)
 
 				// dont' add these
-				ie.PriceUSD = t.PriceUSD
-				ie.Reserve = t.Reserve
-				ie.LiquidityUSD = t.LiquidityUSD
+				//ie.PriceUSD = t.PriceUSD
+				//ie.Reserve = t.Reserve
+				//ie.LiquidityUSD = t.LiquidityUSD
 			}
 		}
 
 		if ie != nil {
+			if ie.Time == to {
+				ie.Time = originalEnd
+			}
 			tokens = append([]*models.TokenBucket{ie}, tokens...)
 		}
 	}
