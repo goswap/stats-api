@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/gochain/gochain/v3"
+	gochain "github.com/gochain/gochain/v3"
 	"github.com/gochain/gochain/v3/accounts/abi"
 	"github.com/gochain/gochain/v3/accounts/abi/bind"
 	"github.com/gochain/gochain/v3/common"
@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = gochain.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -30,29 +29,29 @@ var (
 // PairABI is the input ABI used to generate the binding from.
 const PairABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"Burn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"}],\"name\":\"Mint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0In\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1In\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount0Out\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount1Out\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"Swap\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint112\",\"name\":\"reserve0\",\"type\":\"uint112\"},{\"indexed\":false,\"internalType\":\"uint112\",\"name\":\"reserve1\",\"type\":\"uint112\"}],\"name\":\"Sync\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[],\"name\":\"DOMAIN_SEPARATOR\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"MINIMUM_LIQUIDITY\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"PERMIT_TYPEHASH\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"burn\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount0\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount1\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getReserves\",\"outputs\":[{\"internalType\":\"uint112\",\"name\":\"_reserve0\",\"type\":\"uint112\"},{\"internalType\":\"uint112\",\"name\":\"_reserve1\",\"type\":\"uint112\"},{\"internalType\":\"uint32\",\"name\":\"_blockTimestampLast\",\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token0\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token1\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"kLast\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"permit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"price0CumulativeLast\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"price1CumulativeLast\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"skim\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount0Out\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount1Out\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"swap\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"sync\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token0\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token1\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
-// Pair is an auto generated Go binding around an GoChain contract.
+// Pair is an auto generated Go binding around an Ethereum contract.
 type Pair struct {
 	PairCaller     // Read-only binding to the contract
 	PairTransactor // Write-only binding to the contract
 	PairFilterer   // Log filterer for contract events
 }
 
-// PairCaller is an auto generated read-only Go binding around an GoChain contract.
+// PairCaller is an auto generated read-only Go binding around an Ethereum contract.
 type PairCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// PairTransactor is an auto generated write-only Go binding around an GoChain contract.
+// PairTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type PairTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// PairFilterer is an auto generated log filtering Go binding around an GoChain contract events.
+// PairFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type PairFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// PairSession is an auto generated Go binding around an GoChain contract,
+// PairSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type PairSession struct {
 	Contract     *Pair             // Generic contract binding to set the session for
@@ -60,31 +59,31 @@ type PairSession struct {
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// PairCallerSession is an auto generated read-only Go binding around an GoChain contract,
+// PairCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type PairCallerSession struct {
 	Contract *PairCaller   // Generic contract caller binding to set the session for
 	CallOpts bind.CallOpts // Call options to use throughout this session
 }
 
-// PairTransactorSession is an auto generated write-only Go binding around an GoChain contract,
+// PairTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type PairTransactorSession struct {
 	Contract     *PairTransactor   // Generic contract transactor binding to set the session for
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// PairRaw is an auto generated low-level Go binding around an GoChain contract.
+// PairRaw is an auto generated low-level Go binding around an Ethereum contract.
 type PairRaw struct {
 	Contract *Pair // Generic contract binding to access the raw methods on
 }
 
-// PairCallerRaw is an auto generated low-level read-only Go binding around an GoChain contract.
+// PairCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type PairCallerRaw struct {
 	Contract *PairCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// PairTransactorRaw is an auto generated low-level write-only Go binding around an GoChain contract.
+// PairTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type PairTransactorRaw struct {
 	Contract *PairTransactor // Generic write-only contract binding to access the raw methods on
 }
@@ -138,7 +137,7 @@ func bindPair(address common.Address, caller bind.ContractCaller, transactor bin
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Pair *PairRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Pair *PairRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Pair.Contract.PairCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_Pair *PairRaw) Transact(opts *bind.TransactOpts, method string, params ..
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Pair *PairCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Pair *PairCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Pair.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,207 +173,252 @@ func (_Pair *PairTransactorRaw) Transact(opts *bind.TransactOpts, method string,
 
 // DOMAINSEPARATOR is a free data retrieval call binding the contract method 0x3644e515.
 //
-// Solidity: function DOMAIN_SEPARATOR() constant returns(bytes32)
+// Solidity: function DOMAIN_SEPARATOR() view returns(bytes32)
 func (_Pair *PairCaller) DOMAINSEPARATOR(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "DOMAIN_SEPARATOR")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "DOMAIN_SEPARATOR")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // DOMAINSEPARATOR is a free data retrieval call binding the contract method 0x3644e515.
 //
-// Solidity: function DOMAIN_SEPARATOR() constant returns(bytes32)
+// Solidity: function DOMAIN_SEPARATOR() view returns(bytes32)
 func (_Pair *PairSession) DOMAINSEPARATOR() ([32]byte, error) {
 	return _Pair.Contract.DOMAINSEPARATOR(&_Pair.CallOpts)
 }
 
 // DOMAINSEPARATOR is a free data retrieval call binding the contract method 0x3644e515.
 //
-// Solidity: function DOMAIN_SEPARATOR() constant returns(bytes32)
+// Solidity: function DOMAIN_SEPARATOR() view returns(bytes32)
 func (_Pair *PairCallerSession) DOMAINSEPARATOR() ([32]byte, error) {
 	return _Pair.Contract.DOMAINSEPARATOR(&_Pair.CallOpts)
 }
 
 // MINIMUMLIQUIDITY is a free data retrieval call binding the contract method 0xba9a7a56.
 //
-// Solidity: function MINIMUM_LIQUIDITY() constant returns(uint256)
+// Solidity: function MINIMUM_LIQUIDITY() view returns(uint256)
 func (_Pair *PairCaller) MINIMUMLIQUIDITY(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "MINIMUM_LIQUIDITY")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "MINIMUM_LIQUIDITY")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // MINIMUMLIQUIDITY is a free data retrieval call binding the contract method 0xba9a7a56.
 //
-// Solidity: function MINIMUM_LIQUIDITY() constant returns(uint256)
+// Solidity: function MINIMUM_LIQUIDITY() view returns(uint256)
 func (_Pair *PairSession) MINIMUMLIQUIDITY() (*big.Int, error) {
 	return _Pair.Contract.MINIMUMLIQUIDITY(&_Pair.CallOpts)
 }
 
 // MINIMUMLIQUIDITY is a free data retrieval call binding the contract method 0xba9a7a56.
 //
-// Solidity: function MINIMUM_LIQUIDITY() constant returns(uint256)
+// Solidity: function MINIMUM_LIQUIDITY() view returns(uint256)
 func (_Pair *PairCallerSession) MINIMUMLIQUIDITY() (*big.Int, error) {
 	return _Pair.Contract.MINIMUMLIQUIDITY(&_Pair.CallOpts)
 }
 
 // PERMITTYPEHASH is a free data retrieval call binding the contract method 0x30adf81f.
 //
-// Solidity: function PERMIT_TYPEHASH() constant returns(bytes32)
+// Solidity: function PERMIT_TYPEHASH() view returns(bytes32)
 func (_Pair *PairCaller) PERMITTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "PERMIT_TYPEHASH")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "PERMIT_TYPEHASH")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // PERMITTYPEHASH is a free data retrieval call binding the contract method 0x30adf81f.
 //
-// Solidity: function PERMIT_TYPEHASH() constant returns(bytes32)
+// Solidity: function PERMIT_TYPEHASH() view returns(bytes32)
 func (_Pair *PairSession) PERMITTYPEHASH() ([32]byte, error) {
 	return _Pair.Contract.PERMITTYPEHASH(&_Pair.CallOpts)
 }
 
 // PERMITTYPEHASH is a free data retrieval call binding the contract method 0x30adf81f.
 //
-// Solidity: function PERMIT_TYPEHASH() constant returns(bytes32)
+// Solidity: function PERMIT_TYPEHASH() view returns(bytes32)
 func (_Pair *PairCallerSession) PERMITTYPEHASH() ([32]byte, error) {
 	return _Pair.Contract.PERMITTYPEHASH(&_Pair.CallOpts)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address , address ) constant returns(uint256)
+// Solidity: function allowance(address , address ) view returns(uint256)
 func (_Pair *PairCaller) Allowance(opts *bind.CallOpts, arg0 common.Address, arg1 common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "allowance", arg0, arg1)
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "allowance", arg0, arg1)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address , address ) constant returns(uint256)
+// Solidity: function allowance(address , address ) view returns(uint256)
 func (_Pair *PairSession) Allowance(arg0 common.Address, arg1 common.Address) (*big.Int, error) {
 	return _Pair.Contract.Allowance(&_Pair.CallOpts, arg0, arg1)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address , address ) constant returns(uint256)
+// Solidity: function allowance(address , address ) view returns(uint256)
 func (_Pair *PairCallerSession) Allowance(arg0 common.Address, arg1 common.Address) (*big.Int, error) {
 	return _Pair.Contract.Allowance(&_Pair.CallOpts, arg0, arg1)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address ) constant returns(uint256)
+// Solidity: function balanceOf(address ) view returns(uint256)
 func (_Pair *PairCaller) BalanceOf(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "balanceOf", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "balanceOf", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address ) constant returns(uint256)
+// Solidity: function balanceOf(address ) view returns(uint256)
 func (_Pair *PairSession) BalanceOf(arg0 common.Address) (*big.Int, error) {
 	return _Pair.Contract.BalanceOf(&_Pair.CallOpts, arg0)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address ) constant returns(uint256)
+// Solidity: function balanceOf(address ) view returns(uint256)
 func (_Pair *PairCallerSession) BalanceOf(arg0 common.Address) (*big.Int, error) {
 	return _Pair.Contract.BalanceOf(&_Pair.CallOpts, arg0)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_Pair *PairCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
-	var (
-		ret0 = new(uint8)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "decimals")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "decimals")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_Pair *PairSession) Decimals() (uint8, error) {
 	return _Pair.Contract.Decimals(&_Pair.CallOpts)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_Pair *PairCallerSession) Decimals() (uint8, error) {
 	return _Pair.Contract.Decimals(&_Pair.CallOpts)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
-// Solidity: function factory() constant returns(address)
+// Solidity: function factory() view returns(address)
 func (_Pair *PairCaller) Factory(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "factory")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "factory")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
-// Solidity: function factory() constant returns(address)
+// Solidity: function factory() view returns(address)
 func (_Pair *PairSession) Factory() (common.Address, error) {
 	return _Pair.Contract.Factory(&_Pair.CallOpts)
 }
 
 // Factory is a free data retrieval call binding the contract method 0xc45a0155.
 //
-// Solidity: function factory() constant returns(address)
+// Solidity: function factory() view returns(address)
 func (_Pair *PairCallerSession) Factory() (common.Address, error) {
 	return _Pair.Contract.Factory(&_Pair.CallOpts)
 }
 
 // GetReserves is a free data retrieval call binding the contract method 0x0902f1ac.
 //
-// Solidity: function getReserves() constant returns(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
+// Solidity: function getReserves() view returns(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
 func (_Pair *PairCaller) GetReserves(opts *bind.CallOpts) (struct {
 	Reserve0           *big.Int
 	Reserve1           *big.Int
 	BlockTimestampLast uint32
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "getReserves")
+
+	outstruct := new(struct {
 		Reserve0           *big.Int
 		Reserve1           *big.Int
 		BlockTimestampLast uint32
 	})
-	out := ret
-	err := _Pair.contract.Call(opts, out, "getReserves")
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Reserve0 = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.Reserve1 = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.BlockTimestampLast = *abi.ConvertType(out[2], new(uint32)).(*uint32)
+
+	return *outstruct, err
+
 }
 
 // GetReserves is a free data retrieval call binding the contract method 0x0902f1ac.
 //
-// Solidity: function getReserves() constant returns(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
+// Solidity: function getReserves() view returns(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
 func (_Pair *PairSession) GetReserves() (struct {
 	Reserve0           *big.Int
 	Reserve1           *big.Int
@@ -385,7 +429,7 @@ func (_Pair *PairSession) GetReserves() (struct {
 
 // GetReserves is a free data retrieval call binding the contract method 0x0902f1ac.
 //
-// Solidity: function getReserves() constant returns(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
+// Solidity: function getReserves() view returns(uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast)
 func (_Pair *PairCallerSession) GetReserves() (struct {
 	Reserve0           *big.Int
 	Reserve1           *big.Int
@@ -396,234 +440,279 @@ func (_Pair *PairCallerSession) GetReserves() (struct {
 
 // KLast is a free data retrieval call binding the contract method 0x7464fc3d.
 //
-// Solidity: function kLast() constant returns(uint256)
+// Solidity: function kLast() view returns(uint256)
 func (_Pair *PairCaller) KLast(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "kLast")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "kLast")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // KLast is a free data retrieval call binding the contract method 0x7464fc3d.
 //
-// Solidity: function kLast() constant returns(uint256)
+// Solidity: function kLast() view returns(uint256)
 func (_Pair *PairSession) KLast() (*big.Int, error) {
 	return _Pair.Contract.KLast(&_Pair.CallOpts)
 }
 
 // KLast is a free data retrieval call binding the contract method 0x7464fc3d.
 //
-// Solidity: function kLast() constant returns(uint256)
+// Solidity: function kLast() view returns(uint256)
 func (_Pair *PairCallerSession) KLast() (*big.Int, error) {
 	return _Pair.Contract.KLast(&_Pair.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_Pair *PairCaller) Name(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "name")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "name")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_Pair *PairSession) Name() (string, error) {
 	return _Pair.Contract.Name(&_Pair.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_Pair *PairCallerSession) Name() (string, error) {
 	return _Pair.Contract.Name(&_Pair.CallOpts)
 }
 
 // Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function nonces(address ) constant returns(uint256)
+// Solidity: function nonces(address ) view returns(uint256)
 func (_Pair *PairCaller) Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "nonces", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "nonces", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function nonces(address ) constant returns(uint256)
+// Solidity: function nonces(address ) view returns(uint256)
 func (_Pair *PairSession) Nonces(arg0 common.Address) (*big.Int, error) {
 	return _Pair.Contract.Nonces(&_Pair.CallOpts, arg0)
 }
 
 // Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function nonces(address ) constant returns(uint256)
+// Solidity: function nonces(address ) view returns(uint256)
 func (_Pair *PairCallerSession) Nonces(arg0 common.Address) (*big.Int, error) {
 	return _Pair.Contract.Nonces(&_Pair.CallOpts, arg0)
 }
 
 // Price0CumulativeLast is a free data retrieval call binding the contract method 0x5909c0d5.
 //
-// Solidity: function price0CumulativeLast() constant returns(uint256)
+// Solidity: function price0CumulativeLast() view returns(uint256)
 func (_Pair *PairCaller) Price0CumulativeLast(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "price0CumulativeLast")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "price0CumulativeLast")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Price0CumulativeLast is a free data retrieval call binding the contract method 0x5909c0d5.
 //
-// Solidity: function price0CumulativeLast() constant returns(uint256)
+// Solidity: function price0CumulativeLast() view returns(uint256)
 func (_Pair *PairSession) Price0CumulativeLast() (*big.Int, error) {
 	return _Pair.Contract.Price0CumulativeLast(&_Pair.CallOpts)
 }
 
 // Price0CumulativeLast is a free data retrieval call binding the contract method 0x5909c0d5.
 //
-// Solidity: function price0CumulativeLast() constant returns(uint256)
+// Solidity: function price0CumulativeLast() view returns(uint256)
 func (_Pair *PairCallerSession) Price0CumulativeLast() (*big.Int, error) {
 	return _Pair.Contract.Price0CumulativeLast(&_Pair.CallOpts)
 }
 
 // Price1CumulativeLast is a free data retrieval call binding the contract method 0x5a3d5493.
 //
-// Solidity: function price1CumulativeLast() constant returns(uint256)
+// Solidity: function price1CumulativeLast() view returns(uint256)
 func (_Pair *PairCaller) Price1CumulativeLast(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "price1CumulativeLast")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "price1CumulativeLast")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Price1CumulativeLast is a free data retrieval call binding the contract method 0x5a3d5493.
 //
-// Solidity: function price1CumulativeLast() constant returns(uint256)
+// Solidity: function price1CumulativeLast() view returns(uint256)
 func (_Pair *PairSession) Price1CumulativeLast() (*big.Int, error) {
 	return _Pair.Contract.Price1CumulativeLast(&_Pair.CallOpts)
 }
 
 // Price1CumulativeLast is a free data retrieval call binding the contract method 0x5a3d5493.
 //
-// Solidity: function price1CumulativeLast() constant returns(uint256)
+// Solidity: function price1CumulativeLast() view returns(uint256)
 func (_Pair *PairCallerSession) Price1CumulativeLast() (*big.Int, error) {
 	return _Pair.Contract.Price1CumulativeLast(&_Pair.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_Pair *PairCaller) Symbol(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "symbol")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "symbol")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_Pair *PairSession) Symbol() (string, error) {
 	return _Pair.Contract.Symbol(&_Pair.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_Pair *PairCallerSession) Symbol() (string, error) {
 	return _Pair.Contract.Symbol(&_Pair.CallOpts)
 }
 
 // Token0 is a free data retrieval call binding the contract method 0x0dfe1681.
 //
-// Solidity: function token0() constant returns(address)
+// Solidity: function token0() view returns(address)
 func (_Pair *PairCaller) Token0(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "token0")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "token0")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token0 is a free data retrieval call binding the contract method 0x0dfe1681.
 //
-// Solidity: function token0() constant returns(address)
+// Solidity: function token0() view returns(address)
 func (_Pair *PairSession) Token0() (common.Address, error) {
 	return _Pair.Contract.Token0(&_Pair.CallOpts)
 }
 
 // Token0 is a free data retrieval call binding the contract method 0x0dfe1681.
 //
-// Solidity: function token0() constant returns(address)
+// Solidity: function token0() view returns(address)
 func (_Pair *PairCallerSession) Token0() (common.Address, error) {
 	return _Pair.Contract.Token0(&_Pair.CallOpts)
 }
 
 // Token1 is a free data retrieval call binding the contract method 0xd21220a7.
 //
-// Solidity: function token1() constant returns(address)
+// Solidity: function token1() view returns(address)
 func (_Pair *PairCaller) Token1(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "token1")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "token1")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token1 is a free data retrieval call binding the contract method 0xd21220a7.
 //
-// Solidity: function token1() constant returns(address)
+// Solidity: function token1() view returns(address)
 func (_Pair *PairSession) Token1() (common.Address, error) {
 	return _Pair.Contract.Token1(&_Pair.CallOpts)
 }
 
 // Token1 is a free data retrieval call binding the contract method 0xd21220a7.
 //
-// Solidity: function token1() constant returns(address)
+// Solidity: function token1() view returns(address)
 func (_Pair *PairCallerSession) Token1() (common.Address, error) {
 	return _Pair.Contract.Token1(&_Pair.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
-// Solidity: function totalSupply() constant returns(uint256)
+// Solidity: function totalSupply() view returns(uint256)
 func (_Pair *PairCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pair.contract.Call(opts, out, "totalSupply")
-	return *ret0, err
+	var out []interface{}
+	err := _Pair.contract.Call(opts, &out, "totalSupply")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
-// Solidity: function totalSupply() constant returns(uint256)
+// Solidity: function totalSupply() view returns(uint256)
 func (_Pair *PairSession) TotalSupply() (*big.Int, error) {
 	return _Pair.Contract.TotalSupply(&_Pair.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
-// Solidity: function totalSupply() constant returns(uint256)
+// Solidity: function totalSupply() view returns(uint256)
 func (_Pair *PairCallerSession) TotalSupply() (*big.Int, error) {
 	return _Pair.Contract.TotalSupply(&_Pair.CallOpts)
 }
@@ -988,6 +1077,7 @@ func (_Pair *PairFilterer) ParseApproval(log types.Log) (*PairApproval, error) {
 	if err := _Pair.contract.UnpackLog(event, "Approval", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1144,6 +1234,7 @@ func (_Pair *PairFilterer) ParseBurn(log types.Log) (*PairBurn, error) {
 	if err := _Pair.contract.UnpackLog(event, "Burn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1289,6 +1380,7 @@ func (_Pair *PairFilterer) ParseMint(log types.Log) (*PairMint, error) {
 	if err := _Pair.contract.UnpackLog(event, "Mint", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1447,6 +1539,7 @@ func (_Pair *PairFilterer) ParseSwap(log types.Log) (*PairSwap, error) {
 	if err := _Pair.contract.UnpackLog(event, "Swap", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1581,6 +1674,7 @@ func (_Pair *PairFilterer) ParseSync(log types.Log) (*PairSync, error) {
 	if err := _Pair.contract.UnpackLog(event, "Sync", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1734,5 +1828,6 @@ func (_Pair *PairFilterer) ParseTransfer(log types.Log) (*PairTransfer, error) {
 	if err := _Pair.contract.UnpackLog(event, "Transfer", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

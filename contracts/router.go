@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/gochain/gochain/v3"
+	gochain "github.com/gochain/gochain/v3"
 	"github.com/gochain/gochain/v3/accounts/abi"
 	"github.com/gochain/gochain/v3/accounts/abi/bind"
 	"github.com/gochain/gochain/v3/common"
@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = gochain.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -30,29 +29,29 @@ var (
 // UniRouterABI is the input ABI used to generate the binding from.
 const UniRouterABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_factory\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_WETH\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"WETH\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountADesired\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountBDesired\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountAMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountBMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"addLiquidity\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountA\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountB\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountTokenDesired\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountTokenMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETHMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"addLiquidityETH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToken\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETH\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"factory\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reserveIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reserveOut\",\"type\":\"uint256\"}],\"name\":\"getAmountIn\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reserveIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reserveOut\",\"type\":\"uint256\"}],\"name\":\"getAmountOut\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"}],\"name\":\"getAmountsIn\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"}],\"name\":\"getAmountsOut\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"factory2\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"}],\"name\":\"pairFor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountA\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reserveA\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"reserveB\",\"type\":\"uint256\"}],\"name\":\"quote\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountB\",\"type\":\"uint256\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountAMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountBMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"removeLiquidity\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountA\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountB\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountTokenMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETHMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"removeLiquidityETH\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToken\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETH\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountTokenMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETHMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"removeLiquidityETHSupportingFeeOnTransferTokens\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountETH\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountTokenMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETHMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"approveMax\",\"type\":\"bool\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"removeLiquidityETHWithPermit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToken\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETH\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountTokenMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountETHMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"approveMax\",\"type\":\"bool\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"removeLiquidityETHWithPermitSupportingFeeOnTransferTokens\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountETH\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"liquidity\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountAMin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountBMin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"approveMax\",\"type\":\"bool\"},{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"removeLiquidityWithPermit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountA\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountB\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapETHForExactTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactETHForTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactETHForTokensSupportingFeeOnTransferTokens\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactTokensForETH\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactTokensForETHSupportingFeeOnTransferTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactTokensForTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapExactTokensForTokensSupportingFeeOnTransferTokens\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountInMax\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapTokensForExactETH\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amountInMax\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"path\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"name\":\"swapTokensForExactTokens\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"amounts\",\"type\":\"uint256[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}]"
 
-// UniRouter is an auto generated Go binding around an GoChain contract.
+// UniRouter is an auto generated Go binding around an Ethereum contract.
 type UniRouter struct {
 	UniRouterCaller     // Read-only binding to the contract
 	UniRouterTransactor // Write-only binding to the contract
 	UniRouterFilterer   // Log filterer for contract events
 }
 
-// UniRouterCaller is an auto generated read-only Go binding around an GoChain contract.
+// UniRouterCaller is an auto generated read-only Go binding around an Ethereum contract.
 type UniRouterCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// UniRouterTransactor is an auto generated write-only Go binding around an GoChain contract.
+// UniRouterTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type UniRouterTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// UniRouterFilterer is an auto generated log filtering Go binding around an GoChain contract events.
+// UniRouterFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type UniRouterFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// UniRouterSession is an auto generated Go binding around an GoChain contract,
+// UniRouterSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type UniRouterSession struct {
 	Contract     *UniRouter        // Generic contract binding to set the session for
@@ -60,31 +59,31 @@ type UniRouterSession struct {
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// UniRouterCallerSession is an auto generated read-only Go binding around an GoChain contract,
+// UniRouterCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type UniRouterCallerSession struct {
 	Contract *UniRouterCaller // Generic contract caller binding to set the session for
 	CallOpts bind.CallOpts    // Call options to use throughout this session
 }
 
-// UniRouterTransactorSession is an auto generated write-only Go binding around an GoChain contract,
+// UniRouterTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type UniRouterTransactorSession struct {
 	Contract     *UniRouterTransactor // Generic contract transactor binding to set the session for
 	TransactOpts bind.TransactOpts    // Transaction auth options to use throughout this session
 }
 
-// UniRouterRaw is an auto generated low-level Go binding around an GoChain contract.
+// UniRouterRaw is an auto generated low-level Go binding around an Ethereum contract.
 type UniRouterRaw struct {
 	Contract *UniRouter // Generic contract binding to access the raw methods on
 }
 
-// UniRouterCallerRaw is an auto generated low-level read-only Go binding around an GoChain contract.
+// UniRouterCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type UniRouterCallerRaw struct {
 	Contract *UniRouterCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// UniRouterTransactorRaw is an auto generated low-level write-only Go binding around an GoChain contract.
+// UniRouterTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type UniRouterTransactorRaw struct {
 	Contract *UniRouterTransactor // Generic write-only contract binding to access the raw methods on
 }
@@ -138,7 +137,7 @@ func bindUniRouter(address common.Address, caller bind.ContractCaller, transacto
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_UniRouter *UniRouterRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_UniRouter *UniRouterRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _UniRouter.Contract.UniRouterCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_UniRouter *UniRouterRaw) Transact(opts *bind.TransactOpts, method string,
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_UniRouter *UniRouterCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_UniRouter *UniRouterCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _UniRouter.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -172,25 +171,252 @@ func (_UniRouter *UniRouterTransactorRaw) Transact(opts *bind.TransactOpts, meth
 	return _UniRouter.Contract.contract.Transact(opts, method, params...)
 }
 
-// WETH is a paid mutator transaction binding the contract method 0xad5c4648.
+// WETH is a free data retrieval call binding the contract method 0xad5c4648.
 //
-// Solidity: function WETH() returns(address)
-func (_UniRouter *UniRouterTransactor) WETH(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "WETH")
+// Solidity: function WETH() view returns(address)
+func (_UniRouter *UniRouterCaller) WETH(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "WETH")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
-// WETH is a paid mutator transaction binding the contract method 0xad5c4648.
+// WETH is a free data retrieval call binding the contract method 0xad5c4648.
 //
-// Solidity: function WETH() returns(address)
-func (_UniRouter *UniRouterSession) WETH() (*types.Transaction, error) {
-	return _UniRouter.Contract.WETH(&_UniRouter.TransactOpts)
+// Solidity: function WETH() view returns(address)
+func (_UniRouter *UniRouterSession) WETH() (common.Address, error) {
+	return _UniRouter.Contract.WETH(&_UniRouter.CallOpts)
 }
 
-// WETH is a paid mutator transaction binding the contract method 0xad5c4648.
+// WETH is a free data retrieval call binding the contract method 0xad5c4648.
 //
-// Solidity: function WETH() returns(address)
-func (_UniRouter *UniRouterTransactorSession) WETH() (*types.Transaction, error) {
-	return _UniRouter.Contract.WETH(&_UniRouter.TransactOpts)
+// Solidity: function WETH() view returns(address)
+func (_UniRouter *UniRouterCallerSession) WETH() (common.Address, error) {
+	return _UniRouter.Contract.WETH(&_UniRouter.CallOpts)
+}
+
+// Factory is a free data retrieval call binding the contract method 0xc45a0155.
+//
+// Solidity: function factory() view returns(address)
+func (_UniRouter *UniRouterCaller) Factory(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "factory")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// Factory is a free data retrieval call binding the contract method 0xc45a0155.
+//
+// Solidity: function factory() view returns(address)
+func (_UniRouter *UniRouterSession) Factory() (common.Address, error) {
+	return _UniRouter.Contract.Factory(&_UniRouter.CallOpts)
+}
+
+// Factory is a free data retrieval call binding the contract method 0xc45a0155.
+//
+// Solidity: function factory() view returns(address)
+func (_UniRouter *UniRouterCallerSession) Factory() (common.Address, error) {
+	return _UniRouter.Contract.Factory(&_UniRouter.CallOpts)
+}
+
+// GetAmountIn is a free data retrieval call binding the contract method 0x85f8c259.
+//
+// Solidity: function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) pure returns(uint256 amountIn)
+func (_UniRouter *UniRouterCaller) GetAmountIn(opts *bind.CallOpts, amountOut *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*big.Int, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "getAmountIn", amountOut, reserveIn, reserveOut)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetAmountIn is a free data retrieval call binding the contract method 0x85f8c259.
+//
+// Solidity: function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) pure returns(uint256 amountIn)
+func (_UniRouter *UniRouterSession) GetAmountIn(amountOut *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*big.Int, error) {
+	return _UniRouter.Contract.GetAmountIn(&_UniRouter.CallOpts, amountOut, reserveIn, reserveOut)
+}
+
+// GetAmountIn is a free data retrieval call binding the contract method 0x85f8c259.
+//
+// Solidity: function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) pure returns(uint256 amountIn)
+func (_UniRouter *UniRouterCallerSession) GetAmountIn(amountOut *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*big.Int, error) {
+	return _UniRouter.Contract.GetAmountIn(&_UniRouter.CallOpts, amountOut, reserveIn, reserveOut)
+}
+
+// GetAmountOut is a free data retrieval call binding the contract method 0x054d50d4.
+//
+// Solidity: function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) pure returns(uint256 amountOut)
+func (_UniRouter *UniRouterCaller) GetAmountOut(opts *bind.CallOpts, amountIn *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*big.Int, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "getAmountOut", amountIn, reserveIn, reserveOut)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetAmountOut is a free data retrieval call binding the contract method 0x054d50d4.
+//
+// Solidity: function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) pure returns(uint256 amountOut)
+func (_UniRouter *UniRouterSession) GetAmountOut(amountIn *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*big.Int, error) {
+	return _UniRouter.Contract.GetAmountOut(&_UniRouter.CallOpts, amountIn, reserveIn, reserveOut)
+}
+
+// GetAmountOut is a free data retrieval call binding the contract method 0x054d50d4.
+//
+// Solidity: function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) pure returns(uint256 amountOut)
+func (_UniRouter *UniRouterCallerSession) GetAmountOut(amountIn *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*big.Int, error) {
+	return _UniRouter.Contract.GetAmountOut(&_UniRouter.CallOpts, amountIn, reserveIn, reserveOut)
+}
+
+// GetAmountsIn is a free data retrieval call binding the contract method 0x1f00ca74.
+//
+// Solidity: function getAmountsIn(uint256 amountOut, address[] path) view returns(uint256[] amounts)
+func (_UniRouter *UniRouterCaller) GetAmountsIn(opts *bind.CallOpts, amountOut *big.Int, path []common.Address) ([]*big.Int, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "getAmountsIn", amountOut, path)
+
+	if err != nil {
+		return *new([]*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, err
+
+}
+
+// GetAmountsIn is a free data retrieval call binding the contract method 0x1f00ca74.
+//
+// Solidity: function getAmountsIn(uint256 amountOut, address[] path) view returns(uint256[] amounts)
+func (_UniRouter *UniRouterSession) GetAmountsIn(amountOut *big.Int, path []common.Address) ([]*big.Int, error) {
+	return _UniRouter.Contract.GetAmountsIn(&_UniRouter.CallOpts, amountOut, path)
+}
+
+// GetAmountsIn is a free data retrieval call binding the contract method 0x1f00ca74.
+//
+// Solidity: function getAmountsIn(uint256 amountOut, address[] path) view returns(uint256[] amounts)
+func (_UniRouter *UniRouterCallerSession) GetAmountsIn(amountOut *big.Int, path []common.Address) ([]*big.Int, error) {
+	return _UniRouter.Contract.GetAmountsIn(&_UniRouter.CallOpts, amountOut, path)
+}
+
+// GetAmountsOut is a free data retrieval call binding the contract method 0xd06ca61f.
+//
+// Solidity: function getAmountsOut(uint256 amountIn, address[] path) view returns(uint256[] amounts)
+func (_UniRouter *UniRouterCaller) GetAmountsOut(opts *bind.CallOpts, amountIn *big.Int, path []common.Address) ([]*big.Int, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "getAmountsOut", amountIn, path)
+
+	if err != nil {
+		return *new([]*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, err
+
+}
+
+// GetAmountsOut is a free data retrieval call binding the contract method 0xd06ca61f.
+//
+// Solidity: function getAmountsOut(uint256 amountIn, address[] path) view returns(uint256[] amounts)
+func (_UniRouter *UniRouterSession) GetAmountsOut(amountIn *big.Int, path []common.Address) ([]*big.Int, error) {
+	return _UniRouter.Contract.GetAmountsOut(&_UniRouter.CallOpts, amountIn, path)
+}
+
+// GetAmountsOut is a free data retrieval call binding the contract method 0xd06ca61f.
+//
+// Solidity: function getAmountsOut(uint256 amountIn, address[] path) view returns(uint256[] amounts)
+func (_UniRouter *UniRouterCallerSession) GetAmountsOut(amountIn *big.Int, path []common.Address) ([]*big.Int, error) {
+	return _UniRouter.Contract.GetAmountsOut(&_UniRouter.CallOpts, amountIn, path)
+}
+
+// PairFor is a free data retrieval call binding the contract method 0x6d91c0e2.
+//
+// Solidity: function pairFor(address factory2, address tokenA, address tokenB) pure returns(address pair)
+func (_UniRouter *UniRouterCaller) PairFor(opts *bind.CallOpts, factory2 common.Address, tokenA common.Address, tokenB common.Address) (common.Address, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "pairFor", factory2, tokenA, tokenB)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// PairFor is a free data retrieval call binding the contract method 0x6d91c0e2.
+//
+// Solidity: function pairFor(address factory2, address tokenA, address tokenB) pure returns(address pair)
+func (_UniRouter *UniRouterSession) PairFor(factory2 common.Address, tokenA common.Address, tokenB common.Address) (common.Address, error) {
+	return _UniRouter.Contract.PairFor(&_UniRouter.CallOpts, factory2, tokenA, tokenB)
+}
+
+// PairFor is a free data retrieval call binding the contract method 0x6d91c0e2.
+//
+// Solidity: function pairFor(address factory2, address tokenA, address tokenB) pure returns(address pair)
+func (_UniRouter *UniRouterCallerSession) PairFor(factory2 common.Address, tokenA common.Address, tokenB common.Address) (common.Address, error) {
+	return _UniRouter.Contract.PairFor(&_UniRouter.CallOpts, factory2, tokenA, tokenB)
+}
+
+// Quote is a free data retrieval call binding the contract method 0xad615dec.
+//
+// Solidity: function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) pure returns(uint256 amountB)
+func (_UniRouter *UniRouterCaller) Quote(opts *bind.CallOpts, amountA *big.Int, reserveA *big.Int, reserveB *big.Int) (*big.Int, error) {
+	var out []interface{}
+	err := _UniRouter.contract.Call(opts, &out, "quote", amountA, reserveA, reserveB)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// Quote is a free data retrieval call binding the contract method 0xad615dec.
+//
+// Solidity: function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) pure returns(uint256 amountB)
+func (_UniRouter *UniRouterSession) Quote(amountA *big.Int, reserveA *big.Int, reserveB *big.Int) (*big.Int, error) {
+	return _UniRouter.Contract.Quote(&_UniRouter.CallOpts, amountA, reserveA, reserveB)
+}
+
+// Quote is a free data retrieval call binding the contract method 0xad615dec.
+//
+// Solidity: function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) pure returns(uint256 amountB)
+func (_UniRouter *UniRouterCallerSession) Quote(amountA *big.Int, reserveA *big.Int, reserveB *big.Int) (*big.Int, error) {
+	return _UniRouter.Contract.Quote(&_UniRouter.CallOpts, amountA, reserveA, reserveB)
 }
 
 // AddLiquidity is a paid mutator transaction binding the contract method 0xe8e33700.
@@ -216,170 +442,23 @@ func (_UniRouter *UniRouterTransactorSession) AddLiquidity(tokenA common.Address
 
 // AddLiquidityETH is a paid mutator transaction binding the contract method 0xf305d719.
 //
-// Solidity: function addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline) returns(uint256 amountToken, uint256 amountETH, uint256 liquidity)
+// Solidity: function addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline) payable returns(uint256 amountToken, uint256 amountETH, uint256 liquidity)
 func (_UniRouter *UniRouterTransactor) AddLiquidityETH(opts *bind.TransactOpts, token common.Address, amountTokenDesired *big.Int, amountTokenMin *big.Int, amountETHMin *big.Int, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.contract.Transact(opts, "addLiquidityETH", token, amountTokenDesired, amountTokenMin, amountETHMin, to, deadline)
 }
 
 // AddLiquidityETH is a paid mutator transaction binding the contract method 0xf305d719.
 //
-// Solidity: function addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline) returns(uint256 amountToken, uint256 amountETH, uint256 liquidity)
+// Solidity: function addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline) payable returns(uint256 amountToken, uint256 amountETH, uint256 liquidity)
 func (_UniRouter *UniRouterSession) AddLiquidityETH(token common.Address, amountTokenDesired *big.Int, amountTokenMin *big.Int, amountETHMin *big.Int, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.AddLiquidityETH(&_UniRouter.TransactOpts, token, amountTokenDesired, amountTokenMin, amountETHMin, to, deadline)
 }
 
 // AddLiquidityETH is a paid mutator transaction binding the contract method 0xf305d719.
 //
-// Solidity: function addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline) returns(uint256 amountToken, uint256 amountETH, uint256 liquidity)
+// Solidity: function addLiquidityETH(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountETHMin, address to, uint256 deadline) payable returns(uint256 amountToken, uint256 amountETH, uint256 liquidity)
 func (_UniRouter *UniRouterTransactorSession) AddLiquidityETH(token common.Address, amountTokenDesired *big.Int, amountTokenMin *big.Int, amountETHMin *big.Int, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.AddLiquidityETH(&_UniRouter.TransactOpts, token, amountTokenDesired, amountTokenMin, amountETHMin, to, deadline)
-}
-
-// Factory is a paid mutator transaction binding the contract method 0xc45a0155.
-//
-// Solidity: function factory() returns(address)
-func (_UniRouter *UniRouterTransactor) Factory(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "factory")
-}
-
-// Factory is a paid mutator transaction binding the contract method 0xc45a0155.
-//
-// Solidity: function factory() returns(address)
-func (_UniRouter *UniRouterSession) Factory() (*types.Transaction, error) {
-	return _UniRouter.Contract.Factory(&_UniRouter.TransactOpts)
-}
-
-// Factory is a paid mutator transaction binding the contract method 0xc45a0155.
-//
-// Solidity: function factory() returns(address)
-func (_UniRouter *UniRouterTransactorSession) Factory() (*types.Transaction, error) {
-	return _UniRouter.Contract.Factory(&_UniRouter.TransactOpts)
-}
-
-// GetAmountIn is a paid mutator transaction binding the contract method 0x85f8c259.
-//
-// Solidity: function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) returns(uint256 amountIn)
-func (_UniRouter *UniRouterTransactor) GetAmountIn(opts *bind.TransactOpts, amountOut *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "getAmountIn", amountOut, reserveIn, reserveOut)
-}
-
-// GetAmountIn is a paid mutator transaction binding the contract method 0x85f8c259.
-//
-// Solidity: function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) returns(uint256 amountIn)
-func (_UniRouter *UniRouterSession) GetAmountIn(amountOut *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountIn(&_UniRouter.TransactOpts, amountOut, reserveIn, reserveOut)
-}
-
-// GetAmountIn is a paid mutator transaction binding the contract method 0x85f8c259.
-//
-// Solidity: function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut) returns(uint256 amountIn)
-func (_UniRouter *UniRouterTransactorSession) GetAmountIn(amountOut *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountIn(&_UniRouter.TransactOpts, amountOut, reserveIn, reserveOut)
-}
-
-// GetAmountOut is a paid mutator transaction binding the contract method 0x054d50d4.
-//
-// Solidity: function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) returns(uint256 amountOut)
-func (_UniRouter *UniRouterTransactor) GetAmountOut(opts *bind.TransactOpts, amountIn *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "getAmountOut", amountIn, reserveIn, reserveOut)
-}
-
-// GetAmountOut is a paid mutator transaction binding the contract method 0x054d50d4.
-//
-// Solidity: function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) returns(uint256 amountOut)
-func (_UniRouter *UniRouterSession) GetAmountOut(amountIn *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountOut(&_UniRouter.TransactOpts, amountIn, reserveIn, reserveOut)
-}
-
-// GetAmountOut is a paid mutator transaction binding the contract method 0x054d50d4.
-//
-// Solidity: function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) returns(uint256 amountOut)
-func (_UniRouter *UniRouterTransactorSession) GetAmountOut(amountIn *big.Int, reserveIn *big.Int, reserveOut *big.Int) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountOut(&_UniRouter.TransactOpts, amountIn, reserveIn, reserveOut)
-}
-
-// GetAmountsIn is a paid mutator transaction binding the contract method 0x1f00ca74.
-//
-// Solidity: function getAmountsIn(uint256 amountOut, address[] path) returns(uint256[] amounts)
-func (_UniRouter *UniRouterTransactor) GetAmountsIn(opts *bind.TransactOpts, amountOut *big.Int, path []common.Address) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "getAmountsIn", amountOut, path)
-}
-
-// GetAmountsIn is a paid mutator transaction binding the contract method 0x1f00ca74.
-//
-// Solidity: function getAmountsIn(uint256 amountOut, address[] path) returns(uint256[] amounts)
-func (_UniRouter *UniRouterSession) GetAmountsIn(amountOut *big.Int, path []common.Address) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountsIn(&_UniRouter.TransactOpts, amountOut, path)
-}
-
-// GetAmountsIn is a paid mutator transaction binding the contract method 0x1f00ca74.
-//
-// Solidity: function getAmountsIn(uint256 amountOut, address[] path) returns(uint256[] amounts)
-func (_UniRouter *UniRouterTransactorSession) GetAmountsIn(amountOut *big.Int, path []common.Address) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountsIn(&_UniRouter.TransactOpts, amountOut, path)
-}
-
-// GetAmountsOut is a paid mutator transaction binding the contract method 0xd06ca61f.
-//
-// Solidity: function getAmountsOut(uint256 amountIn, address[] path) returns(uint256[] amounts)
-func (_UniRouter *UniRouterTransactor) GetAmountsOut(opts *bind.TransactOpts, amountIn *big.Int, path []common.Address) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "getAmountsOut", amountIn, path)
-}
-
-// GetAmountsOut is a paid mutator transaction binding the contract method 0xd06ca61f.
-//
-// Solidity: function getAmountsOut(uint256 amountIn, address[] path) returns(uint256[] amounts)
-func (_UniRouter *UniRouterSession) GetAmountsOut(amountIn *big.Int, path []common.Address) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountsOut(&_UniRouter.TransactOpts, amountIn, path)
-}
-
-// GetAmountsOut is a paid mutator transaction binding the contract method 0xd06ca61f.
-//
-// Solidity: function getAmountsOut(uint256 amountIn, address[] path) returns(uint256[] amounts)
-func (_UniRouter *UniRouterTransactorSession) GetAmountsOut(amountIn *big.Int, path []common.Address) (*types.Transaction, error) {
-	return _UniRouter.Contract.GetAmountsOut(&_UniRouter.TransactOpts, amountIn, path)
-}
-
-// PairFor is a paid mutator transaction binding the contract method 0x6d91c0e2.
-//
-// Solidity: function pairFor(address factory2, address tokenA, address tokenB) returns(address pair)
-func (_UniRouter *UniRouterTransactor) PairFor(opts *bind.TransactOpts, factory2 common.Address, tokenA common.Address, tokenB common.Address) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "pairFor", factory2, tokenA, tokenB)
-}
-
-// PairFor is a paid mutator transaction binding the contract method 0x6d91c0e2.
-//
-// Solidity: function pairFor(address factory2, address tokenA, address tokenB) returns(address pair)
-func (_UniRouter *UniRouterSession) PairFor(factory2 common.Address, tokenA common.Address, tokenB common.Address) (*types.Transaction, error) {
-	return _UniRouter.Contract.PairFor(&_UniRouter.TransactOpts, factory2, tokenA, tokenB)
-}
-
-// PairFor is a paid mutator transaction binding the contract method 0x6d91c0e2.
-//
-// Solidity: function pairFor(address factory2, address tokenA, address tokenB) returns(address pair)
-func (_UniRouter *UniRouterTransactorSession) PairFor(factory2 common.Address, tokenA common.Address, tokenB common.Address) (*types.Transaction, error) {
-	return _UniRouter.Contract.PairFor(&_UniRouter.TransactOpts, factory2, tokenA, tokenB)
-}
-
-// Quote is a paid mutator transaction binding the contract method 0xad615dec.
-//
-// Solidity: function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) returns(uint256 amountB)
-func (_UniRouter *UniRouterTransactor) Quote(opts *bind.TransactOpts, amountA *big.Int, reserveA *big.Int, reserveB *big.Int) (*types.Transaction, error) {
-	return _UniRouter.contract.Transact(opts, "quote", amountA, reserveA, reserveB)
-}
-
-// Quote is a paid mutator transaction binding the contract method 0xad615dec.
-//
-// Solidity: function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) returns(uint256 amountB)
-func (_UniRouter *UniRouterSession) Quote(amountA *big.Int, reserveA *big.Int, reserveB *big.Int) (*types.Transaction, error) {
-	return _UniRouter.Contract.Quote(&_UniRouter.TransactOpts, amountA, reserveA, reserveB)
-}
-
-// Quote is a paid mutator transaction binding the contract method 0xad615dec.
-//
-// Solidity: function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) returns(uint256 amountB)
-func (_UniRouter *UniRouterTransactorSession) Quote(amountA *big.Int, reserveA *big.Int, reserveB *big.Int) (*types.Transaction, error) {
-	return _UniRouter.Contract.Quote(&_UniRouter.TransactOpts, amountA, reserveA, reserveB)
 }
 
 // RemoveLiquidity is a paid mutator transaction binding the contract method 0xbaa2abde.
@@ -510,63 +589,63 @@ func (_UniRouter *UniRouterTransactorSession) RemoveLiquidityWithPermit(tokenA c
 
 // SwapETHForExactTokens is a paid mutator transaction binding the contract method 0xfb3bdb41.
 //
-// Solidity: function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
+// Solidity: function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline) payable returns(uint256[] amounts)
 func (_UniRouter *UniRouterTransactor) SwapETHForExactTokens(opts *bind.TransactOpts, amountOut *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.contract.Transact(opts, "swapETHForExactTokens", amountOut, path, to, deadline)
 }
 
 // SwapETHForExactTokens is a paid mutator transaction binding the contract method 0xfb3bdb41.
 //
-// Solidity: function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
+// Solidity: function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline) payable returns(uint256[] amounts)
 func (_UniRouter *UniRouterSession) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapETHForExactTokens(&_UniRouter.TransactOpts, amountOut, path, to, deadline)
 }
 
 // SwapETHForExactTokens is a paid mutator transaction binding the contract method 0xfb3bdb41.
 //
-// Solidity: function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
+// Solidity: function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline) payable returns(uint256[] amounts)
 func (_UniRouter *UniRouterTransactorSession) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapETHForExactTokens(&_UniRouter.TransactOpts, amountOut, path, to, deadline)
 }
 
 // SwapExactETHForTokens is a paid mutator transaction binding the contract method 0x7ff36ab5.
 //
-// Solidity: function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
+// Solidity: function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns(uint256[] amounts)
 func (_UniRouter *UniRouterTransactor) SwapExactETHForTokens(opts *bind.TransactOpts, amountOutMin *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.contract.Transact(opts, "swapExactETHForTokens", amountOutMin, path, to, deadline)
 }
 
 // SwapExactETHForTokens is a paid mutator transaction binding the contract method 0x7ff36ab5.
 //
-// Solidity: function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
+// Solidity: function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns(uint256[] amounts)
 func (_UniRouter *UniRouterSession) SwapExactETHForTokens(amountOutMin *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapExactETHForTokens(&_UniRouter.TransactOpts, amountOutMin, path, to, deadline)
 }
 
 // SwapExactETHForTokens is a paid mutator transaction binding the contract method 0x7ff36ab5.
 //
-// Solidity: function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
+// Solidity: function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns(uint256[] amounts)
 func (_UniRouter *UniRouterTransactorSession) SwapExactETHForTokens(amountOutMin *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapExactETHForTokens(&_UniRouter.TransactOpts, amountOutMin, path, to, deadline)
 }
 
 // SwapExactETHForTokensSupportingFeeOnTransferTokens is a paid mutator transaction binding the contract method 0xb6f9de95.
 //
-// Solidity: function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) returns()
+// Solidity: function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns()
 func (_UniRouter *UniRouterTransactor) SwapExactETHForTokensSupportingFeeOnTransferTokens(opts *bind.TransactOpts, amountOutMin *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.contract.Transact(opts, "swapExactETHForTokensSupportingFeeOnTransferTokens", amountOutMin, path, to, deadline)
 }
 
 // SwapExactETHForTokensSupportingFeeOnTransferTokens is a paid mutator transaction binding the contract method 0xb6f9de95.
 //
-// Solidity: function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) returns()
+// Solidity: function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns()
 func (_UniRouter *UniRouterSession) SwapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapExactETHForTokensSupportingFeeOnTransferTokens(&_UniRouter.TransactOpts, amountOutMin, path, to, deadline)
 }
 
 // SwapExactETHForTokensSupportingFeeOnTransferTokens is a paid mutator transaction binding the contract method 0xb6f9de95.
 //
-// Solidity: function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) returns()
+// Solidity: function swapExactETHForTokensSupportingFeeOnTransferTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns()
 func (_UniRouter *UniRouterTransactorSession) SwapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMin *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapExactETHForTokensSupportingFeeOnTransferTokens(&_UniRouter.TransactOpts, amountOutMin, path, to, deadline)
 }
@@ -695,4 +774,25 @@ func (_UniRouter *UniRouterSession) SwapTokensForExactTokens(amountOut *big.Int,
 // Solidity: function swapTokensForExactTokens(uint256 amountOut, uint256 amountInMax, address[] path, address to, uint256 deadline) returns(uint256[] amounts)
 func (_UniRouter *UniRouterTransactorSession) SwapTokensForExactTokens(amountOut *big.Int, amountInMax *big.Int, path []common.Address, to common.Address, deadline *big.Int) (*types.Transaction, error) {
 	return _UniRouter.Contract.SwapTokensForExactTokens(&_UniRouter.TransactOpts, amountOut, amountInMax, path, to, deadline)
+}
+
+// Receive is a paid mutator transaction binding the contract receive function.
+//
+// Solidity: receive() payable returns()
+func (_UniRouter *UniRouterTransactor) Receive(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _UniRouter.contract.RawTransact(opts, nil) // calldata is disallowed for receive function
+}
+
+// Receive is a paid mutator transaction binding the contract receive function.
+//
+// Solidity: receive() payable returns()
+func (_UniRouter *UniRouterSession) Receive() (*types.Transaction, error) {
+	return _UniRouter.Contract.Receive(&_UniRouter.TransactOpts)
+}
+
+// Receive is a paid mutator transaction binding the contract receive function.
+//
+// Solidity: receive() payable returns()
+func (_UniRouter *UniRouterTransactorSession) Receive() (*types.Transaction, error) {
+	return _UniRouter.Contract.Receive(&_UniRouter.TransactOpts)
 }

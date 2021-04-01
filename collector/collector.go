@@ -158,7 +158,7 @@ func GetPairDetails(ctx context.Context, rpc *goclient.Client, contractAddress c
 }
 
 func GetErc20Details(ctx context.Context, rpc *goclient.Client, addr common.Address) (*models.Token, error) {
-	t0erc20, err := contracts.NewERC20(addr, rpc)
+	t0erc20, err := contracts.NewErc20(addr, rpc)
 	if err != nil {
 		return nil, gotils.C(ctx).Errorf("Token0: %v", err)
 	}

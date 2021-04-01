@@ -36,7 +36,7 @@ type SwapEvent struct {
 var swapEventID = common.HexToHash("0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822")
 
 func GetSwapEvents(ctx context.Context, rpc *goclient.Client, pairAddress common.Address, startBlock, endBlock int64) ([]*SwapEvent, error) {
-	abi, err := abi.JSON(strings.NewReader(contracts.UniswapABI))
+	abi, err := abi.JSON(strings.NewReader(contracts.PairABI))
 	if err != nil {
 		fmt.Println("Failed to parse token Uniswap ABI:", err)
 		os.Exit(1)
@@ -112,7 +112,7 @@ func unpackSwapEvent(ctx context.Context, abi abi.ABI, event types.Log) (*SwapEv
 		return nil, fmt.Errorf("to topic longer than address: %s", string(from))
 	}
 	var swapEvent SwapEvent
-	err := abi.Unpack(&swapEvent, "Swap", event.Data)
+	err := abi.UnpackIntoInterface(&swapEvent, "Swap", event.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack log data: %v", err)
 	}

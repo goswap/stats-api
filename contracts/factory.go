@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/gochain/gochain/v3"
+	gochain "github.com/gochain/gochain/v3"
 	"github.com/gochain/gochain/v3/accounts/abi"
 	"github.com/gochain/gochain/v3/accounts/abi/bind"
 	"github.com/gochain/gochain/v3/common"
@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = gochain.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -28,31 +27,31 @@ var (
 )
 
 // UniswapFactoryABI is the input ABI used to generate the binding from.
-const UniswapFactoryABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeToSetter\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PairCreated\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"allPairs\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"allPairsLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"}],\"name\":\"createPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"feeTo\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"feeToSetter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"getPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeTo\",\"type\":\"address\"}],\"name\":\"setFeeTo\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeToSetter\",\"type\":\"address\"}],\"name\":\"setFeeToSetter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const UniswapFactoryABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeToSetter\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token0\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token1\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PairCreated\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"allPairs\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"allPairsLength\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenA\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenB\",\"type\":\"address\"}],\"name\":\"createPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"pair\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"feeTo\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"feeToSetter\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"getPair\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"pairInitCode\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"initCode\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeTo\",\"type\":\"address\"}],\"name\":\"setFeeTo\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeToSetter\",\"type\":\"address\"}],\"name\":\"setFeeToSetter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
-// UniswapFactory is an auto generated Go binding around an GoChain contract.
+// UniswapFactory is an auto generated Go binding around an Ethereum contract.
 type UniswapFactory struct {
 	UniswapFactoryCaller     // Read-only binding to the contract
 	UniswapFactoryTransactor // Write-only binding to the contract
 	UniswapFactoryFilterer   // Log filterer for contract events
 }
 
-// UniswapFactoryCaller is an auto generated read-only Go binding around an GoChain contract.
+// UniswapFactoryCaller is an auto generated read-only Go binding around an Ethereum contract.
 type UniswapFactoryCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// UniswapFactoryTransactor is an auto generated write-only Go binding around an GoChain contract.
+// UniswapFactoryTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type UniswapFactoryTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// UniswapFactoryFilterer is an auto generated log filtering Go binding around an GoChain contract events.
+// UniswapFactoryFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type UniswapFactoryFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// UniswapFactorySession is an auto generated Go binding around an GoChain contract,
+// UniswapFactorySession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type UniswapFactorySession struct {
 	Contract     *UniswapFactory   // Generic contract binding to set the session for
@@ -60,31 +59,31 @@ type UniswapFactorySession struct {
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// UniswapFactoryCallerSession is an auto generated read-only Go binding around an GoChain contract,
+// UniswapFactoryCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type UniswapFactoryCallerSession struct {
 	Contract *UniswapFactoryCaller // Generic contract caller binding to set the session for
 	CallOpts bind.CallOpts         // Call options to use throughout this session
 }
 
-// UniswapFactoryTransactorSession is an auto generated write-only Go binding around an GoChain contract,
+// UniswapFactoryTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type UniswapFactoryTransactorSession struct {
 	Contract     *UniswapFactoryTransactor // Generic contract transactor binding to set the session for
 	TransactOpts bind.TransactOpts         // Transaction auth options to use throughout this session
 }
 
-// UniswapFactoryRaw is an auto generated low-level Go binding around an GoChain contract.
+// UniswapFactoryRaw is an auto generated low-level Go binding around an Ethereum contract.
 type UniswapFactoryRaw struct {
 	Contract *UniswapFactory // Generic contract binding to access the raw methods on
 }
 
-// UniswapFactoryCallerRaw is an auto generated low-level read-only Go binding around an GoChain contract.
+// UniswapFactoryCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type UniswapFactoryCallerRaw struct {
 	Contract *UniswapFactoryCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// UniswapFactoryTransactorRaw is an auto generated low-level write-only Go binding around an GoChain contract.
+// UniswapFactoryTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type UniswapFactoryTransactorRaw struct {
 	Contract *UniswapFactoryTransactor // Generic write-only contract binding to access the raw methods on
 }
@@ -138,7 +137,7 @@ func bindUniswapFactory(address common.Address, caller bind.ContractCaller, tran
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_UniswapFactory *UniswapFactoryRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_UniswapFactory *UniswapFactoryRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _UniswapFactory.Contract.UniswapFactoryCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_UniswapFactory *UniswapFactoryRaw) Transact(opts *bind.TransactOpts, meth
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_UniswapFactory *UniswapFactoryCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_UniswapFactory *UniswapFactoryCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _UniswapFactory.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,132 +173,188 @@ func (_UniswapFactory *UniswapFactoryTransactorRaw) Transact(opts *bind.Transact
 
 // AllPairs is a free data retrieval call binding the contract method 0x1e3dd18b.
 //
-// Solidity: function allPairs(uint256 ) constant returns(address)
+// Solidity: function allPairs(uint256 ) view returns(address)
 func (_UniswapFactory *UniswapFactoryCaller) AllPairs(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _UniswapFactory.contract.Call(opts, out, "allPairs", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _UniswapFactory.contract.Call(opts, &out, "allPairs", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // AllPairs is a free data retrieval call binding the contract method 0x1e3dd18b.
 //
-// Solidity: function allPairs(uint256 ) constant returns(address)
+// Solidity: function allPairs(uint256 ) view returns(address)
 func (_UniswapFactory *UniswapFactorySession) AllPairs(arg0 *big.Int) (common.Address, error) {
 	return _UniswapFactory.Contract.AllPairs(&_UniswapFactory.CallOpts, arg0)
 }
 
 // AllPairs is a free data retrieval call binding the contract method 0x1e3dd18b.
 //
-// Solidity: function allPairs(uint256 ) constant returns(address)
+// Solidity: function allPairs(uint256 ) view returns(address)
 func (_UniswapFactory *UniswapFactoryCallerSession) AllPairs(arg0 *big.Int) (common.Address, error) {
 	return _UniswapFactory.Contract.AllPairs(&_UniswapFactory.CallOpts, arg0)
 }
 
 // AllPairsLength is a free data retrieval call binding the contract method 0x574f2ba3.
 //
-// Solidity: function allPairsLength() constant returns(uint256)
+// Solidity: function allPairsLength() view returns(uint256)
 func (_UniswapFactory *UniswapFactoryCaller) AllPairsLength(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _UniswapFactory.contract.Call(opts, out, "allPairsLength")
-	return *ret0, err
+	var out []interface{}
+	err := _UniswapFactory.contract.Call(opts, &out, "allPairsLength")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // AllPairsLength is a free data retrieval call binding the contract method 0x574f2ba3.
 //
-// Solidity: function allPairsLength() constant returns(uint256)
+// Solidity: function allPairsLength() view returns(uint256)
 func (_UniswapFactory *UniswapFactorySession) AllPairsLength() (*big.Int, error) {
 	return _UniswapFactory.Contract.AllPairsLength(&_UniswapFactory.CallOpts)
 }
 
 // AllPairsLength is a free data retrieval call binding the contract method 0x574f2ba3.
 //
-// Solidity: function allPairsLength() constant returns(uint256)
+// Solidity: function allPairsLength() view returns(uint256)
 func (_UniswapFactory *UniswapFactoryCallerSession) AllPairsLength() (*big.Int, error) {
 	return _UniswapFactory.Contract.AllPairsLength(&_UniswapFactory.CallOpts)
 }
 
 // FeeTo is a free data retrieval call binding the contract method 0x017e7e58.
 //
-// Solidity: function feeTo() constant returns(address)
+// Solidity: function feeTo() view returns(address)
 func (_UniswapFactory *UniswapFactoryCaller) FeeTo(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _UniswapFactory.contract.Call(opts, out, "feeTo")
-	return *ret0, err
+	var out []interface{}
+	err := _UniswapFactory.contract.Call(opts, &out, "feeTo")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // FeeTo is a free data retrieval call binding the contract method 0x017e7e58.
 //
-// Solidity: function feeTo() constant returns(address)
+// Solidity: function feeTo() view returns(address)
 func (_UniswapFactory *UniswapFactorySession) FeeTo() (common.Address, error) {
 	return _UniswapFactory.Contract.FeeTo(&_UniswapFactory.CallOpts)
 }
 
 // FeeTo is a free data retrieval call binding the contract method 0x017e7e58.
 //
-// Solidity: function feeTo() constant returns(address)
+// Solidity: function feeTo() view returns(address)
 func (_UniswapFactory *UniswapFactoryCallerSession) FeeTo() (common.Address, error) {
 	return _UniswapFactory.Contract.FeeTo(&_UniswapFactory.CallOpts)
 }
 
 // FeeToSetter is a free data retrieval call binding the contract method 0x094b7415.
 //
-// Solidity: function feeToSetter() constant returns(address)
+// Solidity: function feeToSetter() view returns(address)
 func (_UniswapFactory *UniswapFactoryCaller) FeeToSetter(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _UniswapFactory.contract.Call(opts, out, "feeToSetter")
-	return *ret0, err
+	var out []interface{}
+	err := _UniswapFactory.contract.Call(opts, &out, "feeToSetter")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // FeeToSetter is a free data retrieval call binding the contract method 0x094b7415.
 //
-// Solidity: function feeToSetter() constant returns(address)
+// Solidity: function feeToSetter() view returns(address)
 func (_UniswapFactory *UniswapFactorySession) FeeToSetter() (common.Address, error) {
 	return _UniswapFactory.Contract.FeeToSetter(&_UniswapFactory.CallOpts)
 }
 
 // FeeToSetter is a free data retrieval call binding the contract method 0x094b7415.
 //
-// Solidity: function feeToSetter() constant returns(address)
+// Solidity: function feeToSetter() view returns(address)
 func (_UniswapFactory *UniswapFactoryCallerSession) FeeToSetter() (common.Address, error) {
 	return _UniswapFactory.Contract.FeeToSetter(&_UniswapFactory.CallOpts)
 }
 
 // GetPair is a free data retrieval call binding the contract method 0xe6a43905.
 //
-// Solidity: function getPair(address , address ) constant returns(address)
+// Solidity: function getPair(address , address ) view returns(address)
 func (_UniswapFactory *UniswapFactoryCaller) GetPair(opts *bind.CallOpts, arg0 common.Address, arg1 common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _UniswapFactory.contract.Call(opts, out, "getPair", arg0, arg1)
-	return *ret0, err
+	var out []interface{}
+	err := _UniswapFactory.contract.Call(opts, &out, "getPair", arg0, arg1)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GetPair is a free data retrieval call binding the contract method 0xe6a43905.
 //
-// Solidity: function getPair(address , address ) constant returns(address)
+// Solidity: function getPair(address , address ) view returns(address)
 func (_UniswapFactory *UniswapFactorySession) GetPair(arg0 common.Address, arg1 common.Address) (common.Address, error) {
 	return _UniswapFactory.Contract.GetPair(&_UniswapFactory.CallOpts, arg0, arg1)
 }
 
 // GetPair is a free data retrieval call binding the contract method 0xe6a43905.
 //
-// Solidity: function getPair(address , address ) constant returns(address)
+// Solidity: function getPair(address , address ) view returns(address)
 func (_UniswapFactory *UniswapFactoryCallerSession) GetPair(arg0 common.Address, arg1 common.Address) (common.Address, error) {
 	return _UniswapFactory.Contract.GetPair(&_UniswapFactory.CallOpts, arg0, arg1)
+}
+
+// PairInitCode is a free data retrieval call binding the contract method 0x1543246d.
+//
+// Solidity: function pairInitCode() view returns(bytes32 initCode)
+func (_UniswapFactory *UniswapFactoryCaller) PairInitCode(opts *bind.CallOpts) ([32]byte, error) {
+	var out []interface{}
+	err := _UniswapFactory.contract.Call(opts, &out, "pairInitCode")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// PairInitCode is a free data retrieval call binding the contract method 0x1543246d.
+//
+// Solidity: function pairInitCode() view returns(bytes32 initCode)
+func (_UniswapFactory *UniswapFactorySession) PairInitCode() ([32]byte, error) {
+	return _UniswapFactory.Contract.PairInitCode(&_UniswapFactory.CallOpts)
+}
+
+// PairInitCode is a free data retrieval call binding the contract method 0x1543246d.
+//
+// Solidity: function pairInitCode() view returns(bytes32 initCode)
+func (_UniswapFactory *UniswapFactoryCallerSession) PairInitCode() ([32]byte, error) {
+	return _UniswapFactory.Contract.PairInitCode(&_UniswapFactory.CallOpts)
 }
 
 // CreatePair is a paid mutator transaction binding the contract method 0xc9c65396.
@@ -443,7 +498,7 @@ type UniswapFactoryPairCreated struct {
 
 // FilterPairCreated is a free log retrieval operation binding the contract event 0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9.
 //
-// Solidity: event PairCreated(address indexed token0, address indexed token1, address pair, uint256 )
+// Solidity: event PairCreated(address indexed token0, address indexed token1, address pair, uint256 arg3)
 func (_UniswapFactory *UniswapFactoryFilterer) FilterPairCreated(opts *bind.FilterOpts, token0 []common.Address, token1 []common.Address) (*UniswapFactoryPairCreatedIterator, error) {
 
 	var token0Rule []interface{}
@@ -464,7 +519,7 @@ func (_UniswapFactory *UniswapFactoryFilterer) FilterPairCreated(opts *bind.Filt
 
 // WatchPairCreated is a free log subscription operation binding the contract event 0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9.
 //
-// Solidity: event PairCreated(address indexed token0, address indexed token1, address pair, uint256 )
+// Solidity: event PairCreated(address indexed token0, address indexed token1, address pair, uint256 arg3)
 func (_UniswapFactory *UniswapFactoryFilterer) WatchPairCreated(opts *bind.WatchOpts, sink chan<- *UniswapFactoryPairCreated, token0 []common.Address, token1 []common.Address) (event.Subscription, error) {
 
 	var token0Rule []interface{}
@@ -510,11 +565,12 @@ func (_UniswapFactory *UniswapFactoryFilterer) WatchPairCreated(opts *bind.Watch
 
 // ParsePairCreated is a log parse operation binding the contract event 0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9.
 //
-// Solidity: event PairCreated(address indexed token0, address indexed token1, address pair, uint256 )
+// Solidity: event PairCreated(address indexed token0, address indexed token1, address pair, uint256 arg3)
 func (_UniswapFactory *UniswapFactoryFilterer) ParsePairCreated(log types.Log) (*UniswapFactoryPairCreated, error) {
 	event := new(UniswapFactoryPairCreated)
 	if err := _UniswapFactory.contract.UnpackLog(event, "PairCreated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

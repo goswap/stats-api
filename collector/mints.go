@@ -34,7 +34,7 @@ type MintEvent struct {
 var mintEventID = common.HexToHash("0x4c209b5fc8ad50758f13e2e1088ba56a560dff690a1c6fef26394f4c03821c4f")
 
 func GetMintEvents(ctx context.Context, rpc *goclient.Client, pairAddress common.Address, startBlock, endBlock int64, blockLimit uint64) ([]*MintEvent, error) {
-	abi, err := abi.JSON(strings.NewReader(contracts.UniswapABI))
+	abi, err := abi.JSON(strings.NewReader(contracts.PairABI))
 	if err != nil {
 		fmt.Println("Failed to parse token Uniswap ABI:", err)
 		os.Exit(1)
@@ -104,7 +104,7 @@ func unpackMintEvent(ctx context.Context, abi abi.ABI, event types.Log) (*MintEv
 		return nil, fmt.Errorf("from topic longer than address: %s", string(from))
 	}
 	var mintEvent MintEvent
-	err := abi.Unpack(&mintEvent, "Mint", event.Data)
+	err := abi.UnpackIntoInterface(&mintEvent, "Mint", event.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack log data: %v", err)
 	}
