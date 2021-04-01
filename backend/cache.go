@@ -3,7 +3,6 @@ package backend
 import (
 	"context"
 	"encoding/binary"
-	"math"
 	"sync"
 	"time"
 
@@ -153,7 +152,7 @@ func (c *cache) GetToken(ctx context.Context, address string) (*models.Token, er
 
 func (c *cache) GetTotals(ctx context.Context, from, to time.Time, interval time.Duration) ([]*models.TotalBucket, error) {
 	k := key(totalsEP, from, to, interval, "")
-	ttl := time.Duration(math.Max(float64(interval), float64(c.ttl)))
+	ttl := time.Hour // time.Duration(math.Max(float64(interval), float64(c.ttl)))
 	v, err := c.check(k, ttl, func() (interface{}, error) {
 		return c.db.GetTotals(ctx, from, to, interval)
 	})
@@ -163,7 +162,7 @@ func (c *cache) GetTotals(ctx context.Context, from, to time.Time, interval time
 
 func (c *cache) GetPairBuckets(ctx context.Context, pair string, from, to time.Time, interval time.Duration) ([]*models.PairBucket, error) {
 	k := key(pairBucketEP, from, to, interval, pair)
-	ttl := time.Duration(math.Max(float64(interval), float64(c.ttl)))
+	ttl := time.Hour // time.Duration(math.Max(float64(interval), float64(c.ttl)))
 	v, err := c.check(k, ttl, func() (interface{}, error) {
 		return c.db.GetPairBuckets(ctx, pair, from, to, interval)
 	})
@@ -173,7 +172,7 @@ func (c *cache) GetPairBuckets(ctx context.Context, pair string, from, to time.T
 
 func (c *cache) GetTokenBuckets(ctx context.Context, token string, from, to time.Time, interval time.Duration) ([]*models.TokenBucket, error) {
 	k := key(tokenBucketEP, from, to, interval, token)
-	ttl := time.Duration(math.Max(float64(interval), float64(c.ttl)))
+	ttl := time.Hour // time.Duration(math.Max(float64(interval), float64(c.ttl)))
 	v, err := c.check(k, ttl, func() (interface{}, error) {
 		return c.db.GetTokenBuckets(ctx, token, from, to, interval)
 	})
