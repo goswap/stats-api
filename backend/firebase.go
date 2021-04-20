@@ -87,6 +87,31 @@ func (fs *FirestoreBackend) GetPair(ctx context.Context, address string) (*model
 	return nil, gotils.ErrNotFound
 }
 
+// GetPairByName returns pair by name
+func (fs *FirestoreBackend) GetPairByName(ctx context.Context, name string) (*models.Pair, error) {
+	iter := fs.c.Collection(CollectionPairs).Where("pair", "==", name).
+		Documents(ctx)
+	defer iter.Stop()
+
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, gotils.C(ctx).Errorf("error getting data: %v", err)
+		}
+		t := &models.Pair{}
+		err = doc.DataTo(t)
+		if err != nil {
+			return nil, gotils.C(ctx).Errorf("%v", err)
+		}
+		t.AfterLoad(ctx)
+		return t, nil
+	}
+	return nil, gotils.ErrNotFound
+}
+
 // GetTokens returns all the available tokens
 func (fs *FirestoreBackend) GetTokens(ctx context.Context) ([]*models.Token, error) {
 	tokens := make([]*models.Token, 0)
@@ -249,7 +274,7 @@ func (fs *FirestoreBackend) GetPairBuckets(ctx context.Context, pair string, fro
 	// we want to return empty list and not null + size here
 	pairs := make([]*models.PairBucket, 0, n)
 
-	// TODO this should be removed for pulling from aggregated data at given interva
+	// TODO this should be removed for pulling from aggregated data at given intervals
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
 	for _, pair := range pbs {
 		var ie *models.PairBucket
@@ -337,7 +362,7 @@ func (fs *FirestoreBackend) GetTokenBuckets(ctx context.Context, token string, f
 	// want to default to empty list, but also size
 	tokens := make([]*models.TokenBucket, 0, n)
 
-	// TODO this should be removed for pulling from aggregated data at given interva
+	// TODO this should be removed for pulling from aggregated data at given intervals
 	// we have to go backwards to sum, to align windows for now, but still insert in chronological order
 	for _, tok := range tbs {
 		var ie *models.TokenBucket
