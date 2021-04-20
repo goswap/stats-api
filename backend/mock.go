@@ -64,6 +64,15 @@ func (m *mock) GetPair(ctx context.Context, address string) (*models.Pair, error
 	return nil, errors.New("TODO: pair not found error")
 }
 
+func (m *mock) GetPairByName(ctx context.Context, name string) (*models.Pair, error) {
+	for _, p := range m.pairs {
+		if p.Pair == name {
+			return p, nil
+		}
+	}
+	return nil, errors.New("TODO: pair not found error")
+}
+
 func (m *mock) GetTokens(ctx context.Context) ([]*models.Token, error) {
 	return m.tokens, nil
 }
