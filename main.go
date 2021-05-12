@@ -79,33 +79,35 @@ func main() {
 		w.Write([]byte("welcome"))
 	})
 	r.Post("/collect", errorHandler(collect))
-	r.Route("/v1/tokens", func(r chi.Router) {
-		r.Get("/", errorHandler(getTokens))
-		r.Route("/{address}", func(r chi.Router) {
-			r.Get("/", errorHandler(getToken))
-		})
-	})
-	r.Route("/v1/pairs", func(r chi.Router) {
-		r.Get("/", errorHandler(getPairs))
-
-		r.Route("/{address}", func(r chi.Router) {
-			r.Get("/", errorHandler(getPair))
-		})
-	})
-	r.Route("/v1/stats", func(r chi.Router) {
-		r.Get("/", errorHandler(getTotals))
-
+	r.Route("/v1", func(r chi.Router) {
 		r.Route("/tokens", func(r chi.Router) {
-			r.Get("/", errorHandler(getTokensStats))
+			r.Get("/", errorHandler(getTokens))
 			r.Route("/{address}", func(r chi.Router) {
-				r.Get("/", errorHandler(getTokenBuckets))
+				r.Get("/", errorHandler(getToken))
 			})
 		})
-
 		r.Route("/pairs", func(r chi.Router) {
-			r.Get("/", errorHandler(getPairsStats))
+			r.Get("/", errorHandler(getPairs))
+
 			r.Route("/{address}", func(r chi.Router) {
-				r.Get("/", errorHandler(getPairBuckets))
+				r.Get("/", errorHandler(getPair))
+			})
+		})
+		r.Route("/stats", func(r chi.Router) {
+			r.Get("/", errorHandler(getTotals))
+
+			r.Route("/tokens", func(r chi.Router) {
+				r.Get("/", errorHandler(getTokensStats))
+				r.Route("/{address}", func(r chi.Router) {
+					r.Get("/", errorHandler(getTokenBuckets))
+				})
+			})
+
+			r.Route("/pairs", func(r chi.Router) {
+				r.Get("/", errorHandler(getPairsStats))
+				r.Route("/{address}", func(r chi.Router) {
+					r.Get("/", errorHandler(getPairBuckets))
+				})
 			})
 		})
 	})
@@ -152,11 +154,13 @@ func getTokens(w http.ResponseWriter, r *http.Request) error {
 func parseTimes(r *http.Request) (start, end time.Time, frame time.Duration, err error) {
 	end, _ = time.Parse(time.RFC3339, r.URL.Query().Get("time_end"))
 	if end.IsZero() {
-		return start, end, frame, errParamTimeRequired
+		end = time.Now()
+		// return start, end, frame, errParamTimeRequired
 	}
 	start, _ = time.Parse(time.RFC3339, r.URL.Query().Get("time_start"))
 	if start.IsZero() {
-		return start, end, frame, errParamTimeRequired
+		start = end.Add(-24 * time.Hour)
+		// return start, end, frame, errParamTimeRequired
 	}
 
 	frame, _ = time.ParseDuration(r.URL.Query().Get("time_frame"))
@@ -309,7 +313,7 @@ func getPairs(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
-		"pair": ret,
+		"pairs": ret,
 	})
 	return nil
 }
