@@ -35,7 +35,7 @@ var (
 	rpcURL = "https://rpc.gochain.io"
 
 	// errors
-	errParamTimeRequired = gotils.NewHttpError("time_start and time_end not provided or invalid", 400)
+	errParamTimeRequired = gotils.NewHTTPError("time_start and time_end not provided or invalid", 400)
 )
 
 func main() {
@@ -123,7 +123,7 @@ func errorHandler(h myHandlerFunc) http.HandlerFunc {
 		err := h(w, r)
 		if err != nil {
 			switch e := err.(type) {
-			case *gotils.HttpError:
+			case gotils.HTTPError:
 				// TODO we prob don't want stack trace for these (loud, and these are our errors)
 				gcputils.Error().Printf("%v", err)
 				gotils.WriteError(w, e.Code(), e)

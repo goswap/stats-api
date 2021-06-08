@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../stats-interface"
+		}
+	],
+	"settings": {}
+}
