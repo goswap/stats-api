@@ -54,6 +54,40 @@ Defaults to last 24 hours.
 }
 ```
 
+
+### Pair Details
+
+GET `/pairs/{PAIR_ADDRESS}`
+
+```jsonc
+{
+    "pair": {
+        "index": 8,
+        "pair": "FAST-USDC",
+        "address": "0xcbd9A27E7d1c807BCEb02C1Caca663FF645DaCD9",
+        "token0": "0x67bBB47f6942486184f08a671155FCFA6cAd8d71",
+        "token1": "0x97a19aD887262d7Eca45515814cdeF75AcC4f713"
+    }
+}
+```
+
+### Token Details
+
+GET `/tokens/{TOKEN_ADDRESS}`
+
+```jsonc
+{
+    "token": {
+        "name": "Fast.Finance",
+        "symbol": "FAST",
+        "decimals": 18,
+        "totalSupply": "0",
+        "CMCPrice": "0",
+        "address": "0x67bBB47f6942486184f08a671155FCFA6cAd8d71"
+    }
+}
+```
+
 ## Running
 
 First set `G_KEY` env var.
