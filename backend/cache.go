@@ -8,7 +8,7 @@ import (
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/goswap/stats-api/models"
-	"github.com/treeder/gotils"
+	"github.com/treeder/gotils/v2"
 )
 
 // idea: round off 'from' and 'to' to the nearest interval, since most requests

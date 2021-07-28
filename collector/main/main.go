@@ -9,7 +9,7 @@ import (
 	"github.com/goswap/stats-api/collector"
 	"github.com/treeder/firetils"
 	"github.com/treeder/gcputils"
-	"github.com/treeder/gotils"
+	"github.com/treeder/gotils/v2"
 )
 
 var (

@@ -11,7 +11,7 @@ import (
 	"github.com/goswap/stats-api/contracts"
 	"github.com/goswap/stats-api/utils"
 	"github.com/shopspring/decimal"
-	"github.com/treeder/gotils"
+	"github.com/treeder/gotils/v2"
 )
 
 // Pair represents a GoSwap pair

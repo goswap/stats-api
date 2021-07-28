@@ -16,7 +16,7 @@ import (
 	"github.com/goswap/stats-api/models"
 	"github.com/goswap/stats-api/utils"
 	"github.com/shopspring/decimal"
-	"github.com/treeder/gotils"
+	"github.com/treeder/gotils/v2"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

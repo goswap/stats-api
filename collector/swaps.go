@@ -16,7 +16,7 @@ import (
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
 	"github.com/goswap/stats-api/contracts"
-	"github.com/treeder/gotils"
+	"github.com/treeder/gotils/v2"
 )
 
 // SwapEvent represents an emitted Swap event

@@ -16,7 +16,7 @@ import (
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
 	"github.com/goswap/stats-api/contracts"
-	"github.com/treeder/gotils"
+	"github.com/treeder/gotils/v2"
 )
 
 // MintEvent represents a Mint event emitted from an Uniswap.
