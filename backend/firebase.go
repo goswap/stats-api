@@ -6,7 +6,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/goswap/stats-api/models"
-	"github.com/treeder/gotils/v2"
+	"github.com/treeder/gotils"
 	"google.golang.org/api/iterator"
 )
 

@@ -18,7 +18,7 @@ import (
 	"github.com/treeder/firetils"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
-	"github.com/treeder/gotils/v2"
+	"github.com/treeder/gotils"
 )
 
 const (
