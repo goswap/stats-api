@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/goswap/stats-api/backend"
 	"github.com/goswap/stats-api/collector"
 	"github.com/goswap/stats-api/models"
+	"github.com/shopspring/decimal"
 	"github.com/treeder/firetils"
 	"github.com/treeder/gcputils"
 	"github.com/treeder/goapibase"
@@ -111,6 +113,20 @@ func main() {
 			})
 		})
 	})
+
+	// CoinGecko integration
+	r.Route("/v1/coingecko", func(r chi.Router) {
+		r.Get("/pairs", errorHandler(getPairsCoinGecko))
+		r.Get("/tickers", errorHandler(getTickersCoinGecko))
+		r.Get("/orderbook", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("{}")) })
+		r.Route("/historical_trades", func(r chi.Router) {
+			r.Get("/", errorHandler(getPairsStats))
+			r.Route("/{ticker_id}", func(r chi.Router) {
+				r.Get("/", errorHandler(getPairBucketsCoinGecko))
+			})
+		})
+	})
+
 	// Start server
 	_ = goapibase.Start(ctx, gotils.Port(8080), r)
 }
@@ -161,6 +177,25 @@ func parseTimes(r *http.Request) (start, end time.Time, frame time.Duration, err
 	if start.IsZero() {
 		start = end.Add(-24 * time.Hour)
 		// return start, end, frame, errParamTimeRequired
+	}
+
+	frame, _ = time.ParseDuration(r.URL.Query().Get("time_frame"))
+	if frame == 0 {
+		frame = DefaultTimeFrame
+	}
+	return start, end, frame, nil
+}
+
+// parseTimesCoinGecko parses times from CoinGecko's query params
+// TODO maybe join with parseTimes ?
+func parseTimesCoinGecko(r *http.Request) (start, end time.Time, frame time.Duration, err error) {
+	end, _ = time.Parse(time.RFC3339, r.URL.Query().Get("end_time"))
+	if end.IsZero() {
+		return start, end, frame, errParamTimeRequired
+	}
+	start, _ = time.Parse(time.RFC3339, r.URL.Query().Get("start_time"))
+	if start.IsZero() {
+		return start, end, frame, errParamTimeRequired
 	}
 
 	frame, _ = time.ParseDuration(r.URL.Query().Get("time_frame"))
@@ -487,5 +522,169 @@ func collect(w http.ResponseWriter, r *http.Request) error {
 	}
 	l.Info().Println("Collector complete")
 	gotils.WriteMessage(w, http.StatusOK, "ok")
+	return nil
+}
+
+// getPairsCoinGecko returns a list of all pairs in a format required by CoinGecko
+func getPairsCoinGecko(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
+	pairs, err := db.GetPairs(ctx)
+	if err != nil {
+		return err
+	}
+	type Pair struct {
+		TickerId string `json:"ticker_id"`
+		Base     string `json:"base"`
+		Target   string `json:"target"`
+	}
+	ret := make([]Pair, 0)
+	for _, td := range pairs {
+		names := strings.Split(td.Pair, "-")
+		if len(names) > 1 {
+			pair := Pair{
+				names[0] + "_" + names[1],
+				names[0],
+				names[1],
+			}
+			ret = append(ret, pair)
+		}
+	}
+
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"pairs": ret,
+	})
+	return nil
+}
+
+// getTickersCoinGecko "provides 24-hour pricing and volume information on each market pair"
+// in a format required by CoinGecko
+func getTickersCoinGecko(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+
+	timeEnd := time.Now().UTC()
+	timeFrame := 24 * time.Hour * 1
+	timeStart := time.Now().UTC().Add(-timeFrame)
+
+	tokenStats, err := db.GetTokenBuckets(ctx, "", timeStart, timeEnd, timeFrame)
+	if err != nil {
+		return err
+	}
+	tokenInfo := make(map[string]*models.TokenBucket)
+	for _, bucket := range tokenStats {
+		tokenInfo[bucket.Symbol] = bucket
+	}
+
+	stats, err := db.GetPairBuckets(ctx, "", timeStart, timeEnd, timeFrame)
+	if err != nil {
+		return err
+	}
+
+	type Ticker struct {
+		TickerId       string          `json:"ticker_id"`
+		BaseCurrency   string          `json:"base_currency"`
+		TargetCurrency string          `json:"target_currency"`
+		LastPrice      decimal.Decimal `json:"last_price"`
+		BaseVolume     decimal.Decimal `json:"base_volume"`
+		TargetVolume   decimal.Decimal `json:"target_volume"`
+		Bid            decimal.Decimal `json:"bid"`
+		Ask            decimal.Decimal `json:"ask"`
+		High           decimal.Decimal `json:"high"`
+		Low            decimal.Decimal `json:"low"`
+	}
+	ret := make([]Ticker, 0)
+	for _, bucket := range stats {
+		names := strings.Split(bucket.Pair, "-")
+		if len(names) > 1 {
+			lastPrice := decimal.NewFromInt(0)
+			if !(bucket.Price0USD.IsZero() || bucket.Price1USD.IsZero()) {
+				lastPrice = bucket.Price0USD.DivRound(bucket.Price1USD, 2)
+			}
+			ticker := Ticker{
+				TickerId:       names[0] + "_" + names[1],
+				BaseCurrency:   names[0],
+				TargetCurrency: names[1],
+				LastPrice:      lastPrice,
+				BaseVolume:     tokenInfo[names[0]].AmountIn.Add(tokenInfo[names[0]].AmountOut),
+				TargetVolume:   tokenInfo[names[1]].AmountIn.Add(tokenInfo[names[1]].AmountOut),
+			}
+			ret = append(ret, ticker)
+		}
+	}
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"tickers": ret,
+	})
+	return nil
+}
+
+// getPairBucketsCoinGecko "is used to return data on historical completed trades for a given market pair".
+func getPairBucketsCoinGecko(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	timeStart, timeEnd, timeFrame, err := parseTimesCoinGecko(r)
+	if err != nil {
+		return err
+	}
+	name := strings.Replace(chi.URLParam(r, "ticker_id"), "_", "-", 1)
+	pair, err := db.GetPairByName(ctx, name)
+	if err != nil {
+		return err
+	}
+	t := r.URL.Query().Get("type")
+	var limit int64 = 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		limit, _ = strconv.ParseInt(l, 10, 32)
+	}
+	type Trade struct {
+		TradeId        int             `json:"trade_id"`
+		Price          decimal.Decimal `json:"price"`
+		BaseVolume     decimal.Decimal `json:"base_volume"`
+		TargetVolume   decimal.Decimal `json:"target_volume"`
+		TradeTimestamp int64           `json:"trade_timestamp"`
+		Type           string          `json:"type"`
+	}
+	type Ret struct {
+		Buy  []Trade `json:"buy"`
+		Sell []Trade `json:"sell"`
+	}
+	buy := make([]Trade, 0)
+	sell := make([]Trade, 0)
+	pairs, err := db.GetPairBuckets(ctx, pair.AddressHex, timeStart, timeEnd, timeFrame)
+	if err != nil {
+		return err
+	}
+
+	if limit > 0 && int64(len(pairs)) > limit {
+		pairs = pairs[0:limit] // dumb
+	}
+	for _, pr := range pairs {
+		if t == "" || t == "buy" {
+			trade := Trade{
+				TradeId:        0,
+				Price:          pr.Price1USD,
+				BaseVolume:     pr.Amount0In,
+				TargetVolume:   pr.Amount0Out,
+				TradeTimestamp: pr.Time.Unix(),
+				Type:           "buy",
+			}
+			buy = append(buy, trade)
+		}
+		if t == "" || t == "sell" {
+			trade := Trade{
+				TradeId:        0,
+				Price:          pr.Price0USD,
+				BaseVolume:     pr.Amount1In,
+				TargetVolume:   pr.Amount1Out,
+				TradeTimestamp: pr.Time.Unix(),
+				Type:           "sell",
+			}
+			sell = append(sell, trade)
+		}
+	}
+	gotils.WriteObject(w, http.StatusOK, map[string]interface{}{
+		"stats": Ret{
+			Buy:  buy,
+			Sell: sell,
+		},
+	})
 	return nil
 }

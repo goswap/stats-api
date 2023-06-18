@@ -34,6 +34,7 @@ const (
 	totalsEP
 	tokenBucketEP
 	pairBucketEP
+	pairByNameEP
 )
 
 func key(endpoint epID, from, to time.Time, interval time.Duration, key string) string {
@@ -127,6 +128,15 @@ func (c *cache) GetPair(ctx context.Context, address string) (*models.Pair, erro
 	k := key(pairEP, time.Time{}, time.Time{}, 0, address)
 	v, err := c.check(k, c.ttl, func() (interface{}, error) {
 		return c.db.GetPair(ctx, address)
+	})
+	pair, _ := v.(*models.Pair)
+	return pair, err
+}
+
+func (c *cache) GetPairByName(ctx context.Context, name string) (*models.Pair, error) {
+	k := key(pairByNameEP, time.Time{}, time.Time{}, 0, name)
+	v, err := c.check(k, c.ttl, func() (interface{}, error) {
+		return c.db.GetPairByName(ctx, name)
 	})
 	pair, _ := v.(*models.Pair)
 	return pair, err

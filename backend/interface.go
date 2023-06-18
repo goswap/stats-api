@@ -20,6 +20,7 @@ type StatsBackend interface {
 	// GetPairs returns all the available pairs
 	GetPairs(ctx context.Context) ([]*models.Pair, error)
 	GetPair(ctx context.Context, address string) (*models.Pair, error)
+	GetPairByName(ctx context.Context, name string) (*models.Pair, error)
 
 	// GetTokens returns all the available tokens
 	GetTokens(ctx context.Context) ([]*models.Token, error)
