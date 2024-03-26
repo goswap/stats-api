@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gochain/gochain/v3/accounts/abi/bind"
-	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v4/accounts/abi/bind"
+	"github.com/gochain/gochain/v4/common"
 	"github.com/goswap/stats-api/contracts"
 	"github.com/goswap/stats-api/utils"
 	"github.com/shopspring/decimal"

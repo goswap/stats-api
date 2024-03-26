@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/gochain/gochain/v3/goclient"
-	"github.com/gochain/gochain/v3/rpc"
+	"github.com/gochain/gochain/v4/goclient"
+	"github.com/gochain/gochain/v4/rpc"
 	"github.com/goswap/stats-api/collector"
 	"github.com/treeder/firetils"
 	"github.com/treeder/gcputils"

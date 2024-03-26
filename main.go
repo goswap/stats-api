@@ -10,8 +10,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/go-chi/chi/v5"
-	"github.com/gochain/gochain/v3/goclient"
-	"github.com/gochain/gochain/v3/rpc"
+	"github.com/gochain/gochain/v4/goclient"
+	"github.com/gochain/gochain/v4/rpc"
 	"github.com/goswap/stats-api/backend"
 	"github.com/goswap/stats-api/collector"
 	"github.com/goswap/stats-api/models"

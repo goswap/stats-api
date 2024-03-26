@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine AS build-env
+FROM golang:1-alpine AS build-env
 RUN apk --no-cache add build-base git mercurial gcc linux-headers
 WORKDIR /myapp
 # cache dependencies

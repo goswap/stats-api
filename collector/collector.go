@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/gochain/gochain/v3/common"
-	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v4/common"
+	"github.com/gochain/gochain/v4/goclient"
 	"github.com/goswap/stats-api/backend"
 	"github.com/goswap/stats-api/contracts"
 	"github.com/goswap/stats-api/models"
